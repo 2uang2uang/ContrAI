@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Sans, DM_Serif_Display } from 'next/font/google'
 import './globals.css'
+import { WalletProvider } from '@/providers/luno-provider'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -18,7 +19,7 @@ const dmSerifDisplay = DM_Serif_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'DotRepute - Polkadot Reputation System',
+  title: 'ContrAI - Polkadot Reputation System',
   description: 'Build transparent reputation systems on Polkadot',
 }
 
@@ -29,7 +30,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${dmSans.variable} ${dmSerifDisplay.variable}`}>
-      <body className={dmSans.className}>{children}</body>
+      <body className={dmSans.className}>
+        <WalletProvider>
+          {children}
+        </WalletProvider>
+      </body>
     </html>
   )
 }

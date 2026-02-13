@@ -3,6 +3,7 @@
 import React from 'react';
 import { MessageSquarePlus, MessageSquare, Bookmark, ChevronRight } from 'lucide-react';
 import { ChatSession } from '@/types';
+import { useAccount } from '@luno-kit/react';
 
 interface SidebarProps {
   sessions: ChatSession[];
@@ -12,6 +13,17 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat }) => {
+  const { account } = useAccount();
+  
+  // Lấy 3 ký tự đầu và 4 ký tự cuối của địa chỉ
+  const displayAddress = account 
+    ? `${account.address.slice(0, 3)}...${account.address.slice(-4)}`
+    : '';
+  
+  const avatarText = account 
+    ? account.address.slice(0, 3)
+    : '';
+
   return (
     <aside 
       className={`
@@ -25,11 +37,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat })
       <div className="p-4 border-b border-grey-200 dark:border-grey-800">
         <div className="flex items-center gap-3 p-2 rounded-xl bg-grey-100 dark:bg-grey-900 border border-grey-200 dark:border-grey-800 cursor-pointer hover:border-grey-300 dark:hover:border-grey-700 transition-colors">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-accent to-orange-500 flex items-center justify-center text-white font-bold text-xs">
-            15F
+            {avatarText}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-grey-900 dark:text-grey-50 truncate font-mono">15F...Xy92</p>
-            <p className="text-xs text-grey-500 dark:text-grey-400">Free Plan</p>
+            <p className="text-sm font-medium text-grey-900 dark:text-grey-50 truncate font-mono">{displayAddress}</p>
+            <p className="text-xs text-grey-500 dark:text-grey-400">{account ? 'Connected' : 'Not Connected'}</p>
           </div>
           <ChevronRight className="w-4 h-4 text-grey-400 dark:text-grey-500" />
         </div>

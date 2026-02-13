@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "polkadotjs"
-    ]
+    ],
+    "typescript.autoClosingTags": false
 }

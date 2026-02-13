@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import { Hexagon, ArrowRight, Shield, Database, FileText, Github, Twitter, Zap, Layers, Globe, Moon, Sun, Wallet } from 'lucide-react';
+import { useAccount, useConnect, useDisconnect } from '@luno-kit/react';
 
 interface LandingPageProps {
   onLaunch: () => void;
@@ -127,53 +128,67 @@ const RotatingGlobe = ({ isDarkMode }: { isDarkMode: boolean }) => {
 // Sub Components
 // -----------------------------------------------------------------------------
 
-const LandingNavbar = ({ onLaunch, isDarkMode, toggleTheme }: { onLaunch: () => void, isDarkMode: boolean, toggleTheme: () => void }) => (
-  <motion.nav 
-    initial={{ y: -100 }}
-    animate={{ y: 0 }}
-    transition={{ duration: 0.8, ease: "circOut" }}
-    className="fixed top-0 left-0 right-0 z-50 h-20 border-b border-grey-200 dark:border-grey-800 bg-grey-50/80 dark:bg-grey-950/80 backdrop-blur-xl flex items-center justify-between px-6 lg:px-12 transition-colors duration-300"
-  >
-    <div className="flex items-center gap-3">
-      <div className="relative group cursor-pointer">
-        <Hexagon className="w-9 h-9 text-brand-pink fill-brand-pink/10 group-hover:fill-brand-pink/30 transition-all duration-500" strokeWidth={1.5} />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[10px] font-bold text-grey-900 dark:text-white font-mono">DR</span>
+const LandingNavbar = ({ onLaunch, isDarkMode, toggleTheme }: { onLaunch: () => void, isDarkMode: boolean, toggleTheme: () => void }) => {
+  const { account } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const handleWalletClick = () => {
+    if (account) {
+      disconnect();
+    } else if (connectors.length > 0) {
+      connect({ connectorId: connectors[0].id });
+    }
+  };
+
+  return (
+    <motion.nav 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.8, ease: "circOut" }}
+      className="fixed top-0 left-0 right-0 z-50 h-20 border-b border-grey-200 dark:border-grey-800 bg-grey-50/80 dark:bg-grey-950/80 backdrop-blur-xl flex items-center justify-between px-6 lg:px-12 transition-colors duration-300"
+    >
+      <div className="flex items-center gap-3">
+        <div className="relative group cursor-pointer">
+          <Hexagon className="w-9 h-9 text-brand-pink fill-brand-pink/10 group-hover:fill-brand-pink/30 transition-all duration-500" strokeWidth={1.5} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-grey-900 dark:text-white font-mono">CA</span>
+          </div>
         </div>
-      </div>
-      <span className="font-serif text-2xl tracking-tight text-grey-900 dark:text-white">
-        Dot<span className="text-brand-pink">Repute</span>
-      </span>
-    </div>
-    
-    <div className="flex items-center gap-6 md:gap-8">
-      <div className="hidden md:flex items-center gap-6 text-sm font-medium text-grey-500 dark:text-grey-400">
-        <a href="#" className="hover:text-brand-pink transition-colors">Docs</a>
-        <a href="#" className="hover:text-brand-pink transition-colors">Governance</a>
-        <a href="#" className="hover:text-brand-pink transition-colors">Leaderboard</a>
+        <span className="font-serif text-2xl tracking-tight text-grey-900 dark:text-white">
+          <span className="text-brand-pink">ContrAI</span>
+        </span>
       </div>
       
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-grey-200 dark:hover:bg-grey-800 text-grey-600 dark:text-white transition-colors"
-        >
-          {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+      <div className="flex items-center gap-6 md:gap-8">
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-grey-500 dark:text-grey-400">
+          <a href="#" className="hover:text-brand-pink transition-colors">Docs</a>
+          <a href="#" className="hover:text-brand-pink transition-colors">Governance</a>
+          <a href="#" className="hover:text-brand-pink transition-colors">Leaderboard</a>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-grey-200 dark:hover:bg-grey-800 text-grey-600 dark:text-white transition-colors"
+          >
+            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
 
-        <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onLaunch}
-          className="hidden md:flex items-center gap-2 bg-grey-900 dark:bg-white text-white dark:text-grey-900 hover:bg-grey-700 dark:hover:bg-grey-200 transition-colors px-5 py-2.5 rounded-lg text-sm font-bold tracking-tight shadow-md"
-        >
-          <Wallet className="w-4 h-4" />
-          Connect Wallet
-        </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleWalletClick}
+            className="hidden md:flex items-center gap-2 bg-grey-900 dark:bg-white text-white dark:text-grey-900 hover:bg-grey-700 dark:hover:bg-grey-200 transition-colors px-5 py-2.5 rounded-lg text-sm font-bold tracking-tight shadow-md"
+          >
+            <Wallet className="w-4 h-4" />
+            {account ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}` : 'Connect Wallet'}
+          </motion.button>
+        </div>
       </div>
-    </div>
-  </motion.nav>
-);
+    </motion.nav>
+  );
+};
 
 const FeatureCard = ({ icon: Icon, title, desc, delay }: { icon: any, title: string, desc: string, delay: number }) => (
   <motion.div 
