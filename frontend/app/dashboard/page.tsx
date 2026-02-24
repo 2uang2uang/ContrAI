@@ -6,7 +6,8 @@ import { Sidebar } from '@/components/Sidebar';
 import { ChatInterface } from '@/components/ChatInterface';
 import { Send, Menu, Sparkles, TrendingUp, Vote, Shield, LayoutDashboard } from 'lucide-react';
 import { ChatMessage, ChatSession } from '@/types';
-import { sendMessageToGemini } from '@/services/geminiService';
+import { ReputationScoreDisplay } from '@/components/ReputationScoreDisplay';
+import { useAccount } from '@luno-kit/react';
 
 const MOCK_SESSIONS: ChatSession[] = [
   { id: '1', title: 'Governance Analysis', timestamp: new Date(), preview: 'Vote #192 participation details...' },
@@ -15,18 +16,41 @@ const MOCK_SESSIONS: ChatSession[] = [
 ];
 
 const SUGGESTIONS = [
-  { label: 'My Reputation', icon: Shield, query: 'Show my reputation status and score' },
-  { label: 'Governance', icon: Vote, query: 'What are the active referenda?' },
-  { label: 'Staking', icon: TrendingUp, query: 'Analyze my staking rewards' },
-  { label: 'Overview', icon: LayoutDashboard, query: 'Give me a summary of my account' },
+  { 
+    label: 'My Reputation', 
+    icon: Shield, 
+    query: 'Show my reputation status and score',
+    action: 'calculate-reputation' // Action type
+  },
+  { 
+    label: 'Governance', 
+    icon: Vote, 
+    query: 'What are the active referenda?',
+    action: 'show-governance'
+  },
+  { 
+    label: 'Staking', 
+    icon: TrendingUp, 
+    query: 'Analyze my staking rewards',
+    action: 'show-staking'
+  },
+  { 
+    label: 'Overview', 
+    icon: LayoutDashboard, 
+    query: 'Give me a summary of my account',
+    action: 'show-overview'
+  },
 ];
 
 export default function Dashboard() {
+  const { account } = useAccount();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showReputationScore, setShowReputationScore] = useState(false);
+  const [testAddress, setTestAddress] = useState('');
   
   useEffect(() => {
     if (isDarkMode) {
@@ -38,7 +62,7 @@ export default function Dashboard() {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const handleSendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string, isReputationQuery = false) => {
     if (!text.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
@@ -53,28 +77,78 @@ export default function Dashboard() {
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
-      }));
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-      const response = await sendMessageToGemini(history, text);
+      // Sử dụng testAddress nếu có, nếu không thì dùng account.address
+      const addressToUse = testAddress.trim() || account?.address;
 
-      const botMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'model',
-        text: response.text,
-        data: response.data,
-        timestamp: new Date()
-      };
+      if (!addressToUse) {
+        throw new Error('Please connect your wallet or enter a test address');
+      }
 
-      setMessages(prev => [...prev, botMessage]);
+      // Nếu là reputation query và có wallet connected
+      if (isReputationQuery && addressToUse) {
+        const response = await fetch(`${API_URL}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address: addressToUse,
+            query: text,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get response from backend');
+        }
+
+        const data = await response.json();
+
+        const botMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          text: data.response,
+          data: data.onChainData,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        // Regular chat - cũng gọi backend
+        const response = await fetch(`${API_URL}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address: addressToUse,
+            query: text,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get response from backend');
+        }
+
+        const data = await response.json();
+
+        const botMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          text: data.response,
+          data: data.onChainData,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+      }
     } catch (error) {
       console.error(error);
       const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          text: "I'm having trouble connecting to the network. Please try again later.",
+          text: error instanceof Error ? error.message : "I'm having trouble connecting to the network. Please try again later.",
           timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage]);
@@ -85,7 +159,13 @@ export default function Dashboard() {
 
   const handleNewChat = () => {
     setMessages([]);
+    setShowReputationScore(false);
     setSidebarOpen(false);
+  };
+
+  const handleSuggestionClick = async (suggestion: typeof SUGGESTIONS[0]) => {
+    const isReputationQuery = suggestion.action === 'calculate-reputation';
+    await handleSendMessage(suggestion.query, isReputationQuery);
   };
 
   return (
@@ -124,8 +204,44 @@ export default function Dashboard() {
 
             <ChatInterface messages={messages} isLoading={isLoading} />
 
+            {/* Reputation Score Display - hiển thị khi showReputationScore = true */}
+            {showReputationScore && messages.length === 0 && (
+              <div className="flex-1 flex items-center justify-center p-6">
+                <ReputationScoreDisplay />
+              </div>
+            )}
+
+            
+
             <div className="p-4 sm:p-6 bg-grey-50 dark:bg-grey-950 border-t border-grey-200 dark:border-grey-800 z-20 transition-colors duration-300">
                 <div className="max-w-4xl mx-auto space-y-4">
+                    {/* Test Address Input */}
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold text-yellow-800 dark:text-yellow-300">🧪 TEST MODE</span>
+                        </div>
+                        <input
+                            type="text"
+                            value={testAddress}
+                            onChange={(e) => setTestAddress(e.target.value)}
+                            placeholder="Nhập địa chỉ ví để test (để trống = dùng ví đã kết nối)"
+                            className="w-full bg-white dark:bg-grey-900 text-grey-900 dark:text-grey-50 placeholder-grey-400 dark:placeholder-grey-500 px-3 py-2 rounded-lg border border-yellow-300 dark:border-yellow-700 focus:outline-none focus:border-yellow-500 dark:focus:border-yellow-500 text-xs font-mono"
+                        />
+                        {testAddress && (
+                            <div className="mt-2 flex items-center justify-between">
+                                <span className="text-xs text-yellow-700 dark:text-yellow-400">
+                                    Đang test với: {testAddress.slice(0, 8)}...{testAddress.slice(-6)}
+                                </span>
+                                <button
+                                    onClick={() => setTestAddress('')}
+                                    className="text-xs text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 underline"
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="relative group">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-accent to-orange-500 rounded-xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
                         <div className="relative flex items-center bg-white dark:bg-grey-900 rounded-xl border border-grey-200 dark:border-grey-800 focus-within:border-grey-300 dark:focus-within:border-grey-700 transition-colors shadow-sm">
@@ -154,7 +270,7 @@ export default function Dashboard() {
                         {SUGGESTIONS.map((suggestion, idx) => (
                             <button
                                 key={idx}
-                                onClick={() => handleSendMessage(suggestion.query)}
+                                onClick={() => handleSuggestionClick(suggestion)}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-grey-900 border border-grey-200 dark:border-grey-800 hover:border-pink-accent/50 hover:bg-grey-100 dark:hover:bg-grey-800 transition-all whitespace-nowrap group shadow-sm"
                             >
                                 <suggestion.icon className="w-3.5 h-3.5 text-grey-400 dark:text-grey-500 group-hover:text-pink-accent transition-colors" />

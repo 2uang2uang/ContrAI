@@ -9,6 +9,7 @@
         "lint": "next lint"
     },
     "dependencies": {
+        "@google/generative-ai": "^0.24.1",
         "@luno-kit/core": "^0.0.13",
         "@luno-kit/react": "^0.0.13",
         "@luno-kit/ui": "^0.0.13",
