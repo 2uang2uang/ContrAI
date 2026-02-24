@@ -1,8 +1,8 @@
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/dotrepute.git
-cd dotrepute
+git clone https://github.com/yourusername/ContrAI.git
+cd ContrAI
 ```
 
 2. **Setup Backend**
