@@ -11,6 +11,9 @@ import chatRoutes from './routes/chat';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
 const PORT = process.env.PORT || 8080;
 
 app.use(cors({
