@@ -1,6 +1,7 @@
 import express from 'express';
 import { getOnChainData } from '../services/subscan.service';
 import { calculateReputationWithAI } from '../services/ai.service';
+import { generateMintSignature } from '../services/blockchain.service';
 
 const router = express.Router();
 
@@ -127,6 +128,18 @@ router.get('/:address', async (req, res, next) => {
       data: onChainData,
       timestamp: new Date().toISOString(),
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/request-mint', async (req, res, next) => {
+  try {
+    const { address, score, tier } = req.body; 
+    // Logic: Kiểm tra xem score này có khớp với dữ liệu trong DB/Cache không (để bảo mật)
+    
+    const signature = await generateMintSignature(address, score, tier);
+    res.json({ success: true, signature });
   } catch (error) {
     next(error);
   }
