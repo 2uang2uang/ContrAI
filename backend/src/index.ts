@@ -81,7 +81,15 @@ const swaggerOptions: swaggerJsdoc.Options = {
                 governance: { type: 'number' },
                 staking: { type: 'number' },
                 activity: { type: 'number' },
+                behavioral: { type: 'number' },
               },
+            },
+            sybilRisk: {
+              type: 'object',
+              properties: {
+                score: { type: 'number' },
+                flaggedPatterns: { type: 'array', items: { type: 'string' } }
+              }
             },
             rank: { type: 'string' },
             level: { type: 'string' },

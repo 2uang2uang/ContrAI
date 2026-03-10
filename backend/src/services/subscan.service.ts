@@ -31,6 +31,7 @@ export interface OnChainData {
     firstSeen: number;
     lastActive: number;
   };
+  recentTransfers?: any[];
 }
 
 /**
@@ -49,7 +50,7 @@ async function getAccountInfo(address: string) {
         key: address
       }
     });
-    
+
     // Return the account object from the response
     return response.data?.data?.account || null;
   } catch (error: any) {
@@ -81,15 +82,37 @@ async function getStakingInfo(address: string) {
   }
 }
 
+async function getRecentTransfers(address: string) {
+  try {
+    const response = await axios({
+      method: 'POST',
+      url: `${SUBSCAN_API}/api/v2/scan/transfers`,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': SUBSCAN_API_KEY
+      },
+      data: {
+        address: address,
+        row: 10 // Lấy 10 giao dịch gần nhất là đủ để AI tìm pattern
+      }
+    });
+    return response.data?.data?.transfers || [];
+  } catch (error: any) {
+    console.error('Error fetching recent transfers:', error.response?.data || error.message);
+    return [];
+  }
+}
+
 /**
  * Get all on-chain data for an address using Subscan API
  */
 export async function getOnChainData(address: string): Promise<OnChainData> {
   console.log(`📊 Fetching on-chain data from Subscan for ${address}`);
-  
-  const [accountInfo, stakingInfo] = await Promise.all([
+
+  const [accountInfo, stakingInfo, recentTransfers] = await Promise.all([
     getAccountInfo(address),
     getStakingInfo(address),
+    getRecentTransfers(address)
   ]);
 
   // Parse identity - check for display name and judgements
@@ -125,5 +148,6 @@ export async function getOnChainData(address: string): Promise<OnChainData> {
     governance,
     staking,
     activity,
+    recentTransfers
   };
 }

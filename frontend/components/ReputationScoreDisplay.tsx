@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Shield, Vote, Coins, Activity, RefreshCw, Loader2, Sparkles } from 'lucide-react';
+import { Shield, Vote, Coins, Activity, RefreshCw, Loader2, Sparkles, AlertTriangle, Brain } from 'lucide-react';
 import { getReputationScore, ReputationScore } from '@/services/reputationService';
 import { useAccount } from '@luno-kit/react';
 
@@ -92,7 +92,6 @@ export const ReputationScoreDisplay: React.FC = () => {
 
       {score && !loading && (
         <div className="bg-white dark:bg-grey-900 border border-grey-200 dark:border-grey-800 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm">
-          {/* Header gradient line */}
           <div className="h-1 w-full bg-gradient-to-r from-pink-accent via-orange-500 to-yellow-500" />
           
           <div className="p-6">
@@ -110,7 +109,6 @@ export const ReputationScoreDisplay: React.FC = () => {
             </div>
 
             <div className="flex flex-col md:flex-row gap-8 items-start md:items-center mb-8">
-              {/* Main Score */}
               <div className="flex-1 w-full md:w-auto">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-grey-500 dark:text-grey-400 uppercase tracking-widest">
@@ -127,7 +125,6 @@ export const ReputationScoreDisplay: React.FC = () => {
                   <span className="text-lg text-grey-400 dark:text-grey-500 mb-1.5 font-mono">/100</span>
                 </div>
                 
-                {/* Progress Bar */}
                 <div className="h-2 w-full bg-grey-100 dark:bg-grey-800 rounded-full mt-4 overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-pink-accent to-orange-500 rounded-full transition-all duration-500" 
@@ -136,7 +133,6 @@ export const ReputationScoreDisplay: React.FC = () => {
                 </div>
               </div>
               
-              {/* Level Badge */}
               <div className="hidden md:block w-px h-16 bg-grey-200 dark:bg-grey-800" />
               
               <div className="flex flex-col items-center gap-2 px-6 py-4 bg-grey-50 dark:bg-grey-950 rounded-xl border border-grey-200 dark:border-grey-800">
@@ -145,15 +141,29 @@ export const ReputationScoreDisplay: React.FC = () => {
               </div>
             </div>
 
+            {/* SYBIL WARNING BADGE */}
+            {score.sybilRisk && score.sybilRisk.score > 0.7 && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-500 rounded-xl flex flex-col gap-2">
+                <h4 className="text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Cảnh báo rủi ro Sybil / Bot ({(score.sybilRisk.score * 100).toFixed(0)}%)
+                </h4>
+                <ul className="list-disc ml-6 space-y-1 text-sm text-red-700 dark:text-red-400">
+                  {score.sybilRisk.flaggedPatterns.map((pattern, idx) => (
+                    <li key={idx}>{pattern}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Breakdown Stats */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-grey-50 dark:bg-grey-950 border border-grey-200 dark:border-grey-800 rounded-xl p-4 hover:border-grey-300 dark:hover:border-grey-700 transition-colors group">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-grey-500 dark:text-grey-400 mb-1">Identity</p>
-                    <p className="font-mono text-2xl font-bold text-grey-900 dark:text-grey-50">
+                    <p className="font-mono text-xl font-bold text-grey-900 dark:text-grey-50">
                       {score.breakdown.identity}
-                      <span className="text-sm text-grey-400 dark:text-grey-500">/25</span>
                     </p>
                   </div>
                   <div className="p-2 bg-blue-500/10 rounded-lg group-hover:bg-blue-500/20 transition-colors">
@@ -166,9 +176,8 @@ export const ReputationScoreDisplay: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-grey-500 dark:text-grey-400 mb-1">Governance</p>
-                    <p className="font-mono text-2xl font-bold text-grey-900 dark:text-grey-50">
+                    <p className="font-mono text-xl font-bold text-grey-900 dark:text-grey-50">
                       {score.breakdown.governance}
-                      <span className="text-sm text-grey-400 dark:text-grey-500">/30</span>
                     </p>
                   </div>
                   <div className="p-2 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors">
@@ -181,9 +190,8 @@ export const ReputationScoreDisplay: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-grey-500 dark:text-grey-400 mb-1">Staking</p>
-                    <p className="font-mono text-2xl font-bold text-grey-900 dark:text-grey-50">
+                    <p className="font-mono text-xl font-bold text-grey-900 dark:text-grey-50">
                       {score.breakdown.staking}
-                      <span className="text-sm text-grey-400 dark:text-grey-500">/25</span>
                     </p>
                   </div>
                   <div className="p-2 bg-pink-accent/10 rounded-lg group-hover:bg-pink-accent/20 transition-colors">
@@ -196,9 +204,8 @@ export const ReputationScoreDisplay: React.FC = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-grey-500 dark:text-grey-400 mb-1">Activity</p>
-                    <p className="font-mono text-2xl font-bold text-grey-900 dark:text-grey-50">
+                    <p className="font-mono text-xl font-bold text-grey-900 dark:text-grey-50">
                       {score.breakdown.activity}
-                      <span className="text-sm text-grey-400 dark:text-grey-500">/20</span>
                     </p>
                   </div>
                   <div className="p-2 bg-orange-500/10 rounded-lg group-hover:bg-orange-500/20 transition-colors">
@@ -206,20 +213,49 @@ export const ReputationScoreDisplay: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* BEHAVIORAL SCORE CARD */}
+              <div className="bg-grey-50 dark:bg-grey-950 border border-teal-200 dark:border-teal-800/50 rounded-xl p-4 hover:border-teal-400 dark:hover:border-teal-600 transition-colors group col-span-2 md:col-span-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-teal-600 dark:text-teal-400 mb-1">AI Behavioral Pattern</p>
+                    <p className="font-mono text-xl font-bold text-grey-900 dark:text-grey-50">
+                      {score.breakdown.behavioral} <span className="text-sm font-normal text-grey-500">Pts</span>
+                    </p>
+                  </div>
+                  <div className="p-2 bg-teal-500/10 rounded-lg group-hover:bg-teal-500/20 transition-colors">
+                    <Brain className="w-4 h-4 text-teal-500 dark:text-teal-400" />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* AI Analysis */}
-            {score.analysis && (
-              <div className="mt-6 p-4 bg-gradient-to-br from-pink-50 to-orange-50 dark:from-pink-900/10 dark:to-orange-900/10 border border-pink-200 dark:border-pink-800 rounded-xl">
-                <h4 className="text-sm font-semibold text-pink-900 dark:text-pink-300 mb-2 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  AI Analysis
-                </h4>
-                <p className="text-sm text-grey-700 dark:text-grey-300 leading-relaxed">
-                  {score.analysis}
-                </p>
-              </div>
-            )}
+            {/* AI Analysis & Insights (Cyberpunk-ish Vibe) */}
+            <div className="mt-6 flex flex-col gap-4">
+              {score.analysis && (
+                <div className="p-5 bg-[#0D1117] border border-grey-800 rounded-xl text-left">
+                  <h4 className="text-sm font-semibold text-pink-accent mb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    On-chain Analysis
+                  </h4>
+                  <p className="text-sm text-grey-300 font-mono leading-relaxed">
+                    {`> ${score.analysis}`}
+                  </p>
+                </div>
+              )}
+
+              {score.insights && (
+                <div className="p-5 bg-[#0D1117] border border-purple-800/50 rounded-xl text-left">
+                  <h4 className="text-sm font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    Deep Insights
+                  </h4>
+                  <p className="text-xs text-purple-200 font-mono leading-relaxed">
+                    {`> ${score.insights}`}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Strengths & Improvements */}
             {(score.strengths || score.improvements) && (
@@ -242,7 +278,7 @@ export const ReputationScoreDisplay: React.FC = () => {
                 {score.improvements && score.improvements.length > 0 && (
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl">
                     <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                      🎯 Cải thiện
+                      🎯 Cần cải thiện
                     </h4>
                     <ul className="space-y-1">
                       {score.improvements.map((improvement, idx) => (
@@ -255,24 +291,6 @@ export const ReputationScoreDisplay: React.FC = () => {
                 )}
               </div>
             )}
-
-            {/* AI Insights */}
-            {score.insights && (
-              <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-xl">
-                <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-2">
-                  🔮 AI Insights
-                </h4>
-                <p className="text-xs text-purple-700 dark:text-purple-400 leading-relaxed">
-                  {score.insights}
-                </p>
-              </div>
-            )}
-
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl">
-              <p className="text-xs text-blue-600 dark:text-blue-400">
-                💡 <strong>Powered by AI:</strong> Score được tính toán bởi Gemini AI dựa trên phân tích sâu các hoạt động on-chain của bạn.
-              </p>
-            </div>
           </div>
         </div>
       )}

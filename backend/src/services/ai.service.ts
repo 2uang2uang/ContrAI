@@ -25,13 +25,13 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
   const entry = cache.get(key);
   if (!entry) return null;
-  
+
   const age = Date.now() - entry.timestamp;
   if (age > CACHE_TTL) {
     cache.delete(key);
     return null;
   }
-  
+
   console.log(`✅ Cache hit for ${key} (age: ${Math.floor(age / 1000)}s)`);
   return entry.data;
 }
@@ -47,6 +47,11 @@ export interface ReputationScore {
     governance: number;
     staking: number;
     activity: number;
+    behavioral: number; // Điểm chất lượng hành vi (MỚI)
+  };
+  sybilRisk: {          // Đánh giá rủi ro clone/spam (MỚI)
+    score: number;      // 0.0 đến 1.0 (ví dụ: 0.8 là rủi ro cao)
+    flaggedPatterns: string[];
   };
   rank: string;
   level: string;
@@ -71,32 +76,45 @@ export async function calculateReputationWithAI(
 
   console.log(`🤖 AI analyzing reputation for ${address}`);
 
-  const prompt = `Polkadot reputation AI. Score based on ACTUAL data only.
+  const recentTransfersSummary = onChainData.recentTransfers?.map(t =>
+    `[${new Date(t.block_timestamp * 1000).toISOString()}] ${t.from === address ? 'Gửi' : 'Nhận'} ${t.amount} ${t.asset_symbol} ${t.from === address ? 'tới' : 'từ'} ${t.to === address ? t.from : t.to}`
+  ).join('\n') || 'Không có giao dịch gần đây';
 
-Address: ${address}
+  const prompt = `Bạn là một AI chuyên gia phân tích hành vi on-chain trên hệ sinh thái Polkadot (Reputation as Infrastructure).
+Nhiệm vụ của bạn là đánh giá UY TÍN (Reputation) của ví này, KHÔNG CHỈ DỰA VÀO VIỆC ĐẾM SỐ, mà phải phân tích "Chất lượng hành vi" và "Rủi ro Sybil" (tài khoản clone/spam).
 
-Data:
-- Identity: ${onChainData.identity.hasIdentity ? 'Yes' : 'No'}, Verified: ${onChainData.identity.isVerified}, Judgements: ${onChainData.identity.judgements}
-- Governance: ${onChainData.governance.votesCount} votes, ${onChainData.governance.proposalsCount} proposals
-- Staking: ${parseFloat(onChainData.staking.totalStaked) / 1e10} DOT, Nominator: ${onChainData.staking.isNominator}, Validator: ${onChainData.staking.isValidator}
-- Activity: ${onChainData.activity.transactionCount} transactions
+Địa chỉ ví: ${address}
 
-Scoring (EXACT):
-1. Identity (0-25): No=0, Has=10, Verified=25
-2. Governance (0-30): 0=0, 1-5=10, 6-20=20, 20+=30
-3. Staking (0-25): 0=0, <10=10, 10-100=15, 100+=25
-4. Activity (0-20): 0=0, 1-10=5, 11-50=10, 51-100=15, 100+=20
+1. DỮ LIỆU TỔNG QUAN:
+- Identity: Has Identity: ${onChainData.identity.hasIdentity}, Verified: ${onChainData.identity.isVerified}, Judgements: ${onChainData.identity.judgements}
+- Governance: ${onChainData.governance.votesCount} votes
+- Staking: ${parseFloat(onChainData.staking.totalStaked) / 1e10} DOT
+- Activity: ${onChainData.activity.transactionCount} total transactions
 
-Return JSON only:
+2. DỮ LIỆU LỊCH SỬ GIAO DỊCH GẦN NHẤT (Để tìm Pattern & Sybil Risk):
+${recentTransfersSummary}
+
+HƯỚNG DẪN CHẤM ĐIỂM BẰNG PHÂN TÍCH HÀNH VI:
+- Tính "totalScore" (0-100).
+- "breakdown" gồm: identity, governance, staking, activity, VÀ behavioral (chất lượng hành vi tổng thể).
+- Phân tích Rủi ro Sybil (sybilRisk): Dựa vào lịch sử giao dịch. Nếu ví nhận tiền liên tục từ 1 nguồn lạ rồi ngay lập tức chuyển đi, hoặc thời gian dồn dập bất thường -> Rủi ro cao (score tiến gần 1.0). Nếu giao dịch tự nhiên, rải rác, có staking -> Rủi ro thấp (tiến về 0.0).
+
+BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Không thêm text bên ngoài):
 {
-  "totalScore": <sum>,
-  "breakdown": {"identity": <n>, "governance": <n>, "staking": <n>, "activity": <n>},
-  "rank": "<90-100=Top 1%, 80-89=Top 5%, 70-79=Top 10%, 60-69=Top 25%, 50-59=Top 50%, <50=Unranked>",
-  "level": "<90-100=Legend, 80-89=Master, 70-79=Expert, 60-69=Advanced, 50-59=Intermediate, 40-49=Beginner, <40=Newcomer>",
-  "analysis": "<Vietnamese analysis>",
-  "strengths": ["<actual strengths>"],
-  "improvements": ["<actual improvements>"],
-  "insights": "<AI insights>"
+  "totalScore": <điểm_tổng_từ_0_đến_100>,
+  "breakdown": {
+    "identity": <điểm>, "governance": <điểm>, "staking": <điểm>, "activity": <điểm>, "behavioral": <điểm_chất_lượng_hành_vi>
+  },
+  "sybilRisk": {
+    "score": <từ_0.0_đến_1.0>,
+    "flaggedPatterns": ["<mô tả các mẫu hành vi bất thường nếu có, ví dụ: 'Giao dịch chuyển tiền dồn dập trong cùng 1 ngày'>"]
+  },
+  "rank": "<Top 1%, 5%, 10%, 25%, 50%, Unranked>",
+  "level": "<Legend, Master, Expert, Advanced, Intermediate, Beginner, Newcomer>",
+  "analysis": "<Phân tích chuyên sâu bằng TIẾNG VIỆT về chất lượng thực sự của ví, có giống ví người dùng thật không>",
+  "strengths": ["<điểm mạnh 1>", "<điểm mạnh 2>"],
+  "improvements": ["<điều cần cải thiện 1>"],
+  "insights": "<Góc nhìn sâu sắc của AI về hành vi trên on-chain của ví này>"
 }`;
 
   // Retry logic for handling 503 errors - OPTIMIZED
@@ -106,7 +124,7 @@ Return JSON only:
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       // Add timeout to prevent hanging (60s for reputation calculation - increased)
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('AI request timeout')), 60000) // 60s timeout
       );
 
@@ -126,10 +144,10 @@ Return JSON only:
       text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
       const aiScore = JSON.parse(text);
-      
+
       // Cache the result
       setCache(reputationCache, address, aiScore);
-      
+
       return aiScore;
     } catch (error: any) {
       const isLastAttempt = attempt === maxRetries - 1;
@@ -149,9 +167,9 @@ Return JSON only:
       throw new Error(
         isTimeout
           ? 'AI service đang xử lý quá lâu. Vui lòng thử lại sau ít phút.'
-          : is503Error 
-          ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
-          : `Lỗi AI service: ${error.message}`
+          : is503Error
+            ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
+            : `Lỗi AI service: ${error.message}`
       );
     }
   }
@@ -203,7 +221,7 @@ Answer in Vietnamese. Be specific and factual based on real data.`;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       // Add timeout to prevent hanging (60s for chat responses - increased)
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('AI request timeout')), 60000) // 60s timeout
       );
 
@@ -220,10 +238,10 @@ Answer in Vietnamese. Be specific and factual based on real data.`;
       const response = await Promise.race([aiPromise, timeoutPromise]) as any;
 
       const result = response.text || 'Xin lỗi, tôi không thể trả lời câu hỏi này.';
-      
+
       // Cache the result
       setCache(chatCache, cacheKey, result);
-      
+
       return result;
     } catch (error: any) {
       const isLastAttempt = attempt === maxRetries - 1;
@@ -243,9 +261,9 @@ Answer in Vietnamese. Be specific and factual based on real data.`;
       throw new Error(
         isTimeout
           ? 'AI service đang xử lý quá lâu. Vui lòng thử câu hỏi ngắn gọn hơn.'
-          : is503Error 
-          ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
-          : `Lỗi AI service: ${error.message}`
+          : is503Error
+            ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
+            : `Lỗi AI service: ${error.message}`
       );
     }
   }

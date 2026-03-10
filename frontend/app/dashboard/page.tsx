@@ -115,21 +115,20 @@ export default function Dashboard() {
                 );
             }
 
-            // Nếu là reputation query và có wallet connected
+            // ĐÃ SỬA: Phân nhánh rõ ràng gọi API Calculate khi yêu cầu tính điểm
             if (isReputationQuery && addressToUse) {
-                const response = await fetch(`${API_URL}/api/chat`, {
+                const response = await fetch(`${API_URL}/api/reputation/calculate`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                         address: addressToUse,
-                        query: text,
                     }),
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to get response from backend");
+                    throw new Error("Failed to calculate reputation from backend");
                 }
 
                 const data = await response.json();
@@ -137,14 +136,14 @@ export default function Dashboard() {
                 const botMessage: ChatMessage = {
                     id: (Date.now() + 1).toString(),
                     role: "model",
-                    text: data.response,
-                    data: data.onChainData,
+                    text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
+                    data: data, // Truyền toàn bộ cục dữ liệu (gồm score chứa Sybil Risk, Behavioral...) vào đây
                     timestamp: new Date(),
                 };
 
                 setMessages((prev) => [...prev, botMessage]);
             } else {
-                // Regular chat - cũng gọi backend
+                // CHAT BÌNH THƯỜNG: Vẫn gọi API Chat
                 const response = await fetch(`${API_URL}/api/chat`, {
                     method: "POST",
                     headers: {
@@ -166,7 +165,7 @@ export default function Dashboard() {
                     id: (Date.now() + 1).toString(),
                     role: "model",
                     text: data.response,
-                    data: data.onChainData,
+                    data: data.onChainData, 
                     timestamp: new Date(),
                 };
 

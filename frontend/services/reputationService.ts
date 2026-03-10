@@ -30,13 +30,18 @@ export interface ReputationScore {
     governance: number;
     staking: number;
     activity: number;
+    behavioral: number;
+  };
+  sybilRisk: {
+    score: number;
+    flaggedPatterns: string[];
   };
   rank: string;
   level: string;
-  analysis?: string;
-  strengths?: string[];
-  improvements?: string[];
-  insights?: string;
+  analysis: string;
+  strengths: string[];
+  improvements: string[];
+  insights: string;
 }
 
 /**
@@ -57,11 +62,11 @@ export async function getReputationScore(address: string): Promise<ReputationSco
     }
 
     const result = await response.json();
-    
+
     if (result.success && result.score) {
       return result.score;
     }
-    
+
     throw new Error('Invalid backend response');
   } catch (error) {
     console.error('Error getting reputation score:', error);
@@ -81,11 +86,11 @@ export async function getOnChainData(address: string): Promise<OnChainData> {
     }
 
     const result = await response.json();
-    
+
     if (result.success && result.data) {
       return result.data;
     }
-    
+
     throw new Error('Invalid backend response');
   } catch (error) {
     console.error('Error getting on-chain data:', error);
