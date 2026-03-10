@@ -18,7 +18,6 @@ export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
     if (account) {
       disconnect();
     } else if (connectors.length > 0) {
-      // Connect với connector đầu tiên (polkadot.js)
       connect({ connectorId: connectors[0].id });
     }
   };
@@ -26,15 +25,18 @@ export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
   return (
     <nav className="h-16 border-b border-grey-200 dark:border-grey-800 bg-grey-50/80 dark:bg-grey-950/50 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-50 transition-colors duration-300">
       <div className="flex items-center gap-3">
-        <div className="relative">
-          <Hexagon className="w-8 h-8 text-pink-accent fill-pink-accent/20" strokeWidth={1.5} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[10px] font-bold text-grey-900 dark:text-grey-50">C</span>
-          </div>
-        </div>
-        <span className="font-semibold text-lg tracking-tight text-grey-900 dark:text-grey-50">
-          Contr<span className="text-pink-accent">Ai</span>
-        </span>
+        <a href="/" className="flex items-center gap-3">
+    <div className="relative">
+      <Hexagon className="w-8 h-8 text-pink-accent fill-pink-accent/20" strokeWidth={1.5} />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-[10px] font-bold text-grey-900 dark:text-grey-50">CA</span>
+      </div>
+    </div>
+
+    <span className="font-semibold text-lg tracking-tight text-grey-900 dark:text-grey-50">
+      Contr<span className="text-pink-accent">Ai</span>
+    </span>
+  </a>
       </div>
 
       <div className="flex items-center gap-6">
