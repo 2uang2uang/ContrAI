@@ -1,0 +1,9 @@
+{
+  "name": "ContrAI Gold Badge",
+  "description": "Huy hiệu chứng nhận uy tín cấp độ Gold trên mạng Paseo.",
+  "image": "ipfs://bafybeihpuvdwx4txtdsnb5wctosecn2giouie3nhur4onnckuhkafrw2yy/gold.webp",
+  "attributes": [
+    { "trait_type": "Tier", "value": "Gold" },
+    { "trait_type": "Basis Points", "value": "7500-8999" }
+  ]
+}

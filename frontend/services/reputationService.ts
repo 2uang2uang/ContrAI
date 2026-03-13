@@ -96,4 +96,19 @@ export async function getOnChainData(address: string): Promise<OnChainData> {
     console.error('Error getting on-chain data:', error);
     throw error;
   }
+  
+}
+export async function getMintSignature(address: string, score: number, snapshotBlock: number) {
+  return fetch(`${API_URL}/api/reputation/request-mint`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      address, 
+      score, 
+      snapshotBlock 
+    }),
+  }).then(res => {
+    if (!res.ok) throw new Error("Backend error");
+    return res.json(); // Trả về dữ liệu JSON
+  });
 }

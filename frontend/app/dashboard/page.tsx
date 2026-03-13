@@ -197,8 +197,15 @@ export default function Dashboard() {
     const handleSuggestionClick = async (
         suggestion: (typeof SUGGESTIONS)[0],
     ) => {
-        const isReputationQuery = suggestion.action === "calculate-reputation";
-        await handleSendMessage(suggestion.query, isReputationQuery);
+        if (suggestion.action === "calculate-reputation") {
+            // Nếu click vào My Reputation -> Bật màn hình Display và xóa chat cũ
+            setShowReputationScore(true);
+            setMessages([]); 
+        } else {
+            // Các nút khác thì chat bình thường
+            setShowReputationScore(false);
+            await handleSendMessage(suggestion.query, false);
+        }
     };
 
     return (
@@ -220,7 +227,7 @@ export default function Dashboard() {
                     toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                 />
 
-                <main className="flex-1 flex flex-col relative w-full h-[calc(100vh-64px)]">
+                <main className="flex-1 flex flex-col relative w-full">
                     <div className="flex items-center gap-3 px-6 py-4 border-b border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-grey-950/40 backdrop-blur-sm z-20">
                         <button
                             onClick={() => setSidebarOpen(true)}
@@ -239,13 +246,15 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <ChatInterface messages={messages} isLoading={isLoading} />
-
                     {/* Reputation Score Display - hiển thị khi showReputationScore = true */}
-                    {showReputationScore && messages.length === 0 && (
-                        <div className="flex-1 flex items-center justify-center p-6">
-                            <ReputationScoreDisplay />
+                    {showReputationScore && messages.length === 0 ? (
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="flex justify-center">
+                                <ReputationScoreDisplay />
+                            </div>
                         </div>
+                    ) : (
+                        <ChatInterface messages={messages} isLoading={isLoading} />
                     )}
 
                     <div className="p-4 sm:p-6 bg-grey-50 dark:bg-grey-950 border-t border-grey-200 dark:border-grey-800 z-20 transition-colors duration-300">

@@ -2,14 +2,79 @@
 
 import React, { useState } from 'react';
 import { Shield, Vote, Coins, Activity, RefreshCw, Loader2, Sparkles, AlertTriangle, Brain } from 'lucide-react';
-import { getReputationScore, ReputationScore } from '@/services/reputationService';
+import { getMintSignature, getReputationScore, ReputationScore } from '@/services/reputationService';
 import { useAccount } from '@luno-kit/react';
+import { ethers } from 'ethers';
+
+
 
 export const ReputationScoreDisplay: React.FC = () => {
   const { account } = useAccount();
   const [score, setScore] = useState<ReputationScore | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine tier based on score
+  const getTierFromScore = (totalScore: number): { name: string; value: number } => {
+    if (totalScore >= 97) return { name: 'Diamond', value: 5 }; // >= 9700 bps
+    if (totalScore >= 90) return { name: 'Gold', value: 4 };    // >= 9000 bps
+    if (totalScore >= 75) return { name: 'Silver', value: 3 };  // >= 7500 bps
+    if (totalScore >= 50) return { name: 'Bronze', value: 2 };  // >= 5000 bps
+    return { name: 'Stone', value: 1 };                         // < 5000 bps
+  };
+
+  const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || ""; 
+
+  const handleMint = async () => {
+  if (!score || !account) return;
+  setLoading(true);
+
+  try {
+    const ethereum = (window as any).ethereum;
+    const provider = new ethers.BrowserProvider(ethereum);
+    const signer = await provider.getSigner();
+    const evmAddress = await signer.getAddress(); // Đây chính là 0x5bFAb... mà bạn vừa test thành công
+
+    const currentBlock = await provider.getBlockNumber();
+    const compositePct = score.totalScore * 100;
+
+    // 1. Gọi Backend để lấy chữ ký mà bạn vừa test chạy được
+    const { signature } = await getMintSignature(evmAddress, compositePct, currentBlock);
+
+    // 2. Khai báo ABI cho hàm submitScore
+    const registryAbi = [
+      "function submitScore(address wallet, uint256 compositePct, uint256 governancePct, uint256 economicPct, uint256 identityPct, uint256 socialPct, uint256 snapshotBlock, bytes signature) external"
+    ];
+
+    // 3. Kết nối tới Registry Contract mới nhất
+    const registryContract = new ethers.Contract(
+      registryAddress, 
+      registryAbi,
+      signer
+    );
+
+    console.log("🚀 Đang gửi giao dịch submitScore tới Paseo Asset Hub...");
+
+    // 4. Thực thi giao dịch
+    // Lưu ý: Các tham số Pct khác để là 0 giống như lúc bạn tạo chữ ký ở Backend
+    const tx = await registryContract.submitScore(
+      evmAddress,
+      compositePct,
+      0, 0, 0, 0, // governance, economic, identity, social
+      currentBlock,
+      signature
+    );
+
+    await tx.wait();
+    alert("🎉 Chúc mừng! Bạn đã xác thực điểm uy tín và Mint Badge thành công!");
+
+  } catch (err: any) {
+    console.error("Lỗi thực thi giao dịch:", err);
+    alert(`Lỗi: ${err.reason || err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchScore = async () => {
     if (!account?.address) {
@@ -22,6 +87,10 @@ export const ReputationScoreDisplay: React.FC = () => {
 
     try {
       const reputationScore = await getReputationScore(account.address);
+      
+      // 🔥 HARDCODE ĐIỂM SỐ ĐỂ TEST - XÓA DÒNG NÀY SAU KHI TEST XONG
+      reputationScore.totalScore = 85; // Thay đổi số này để test các tier khác nhau
+      
       setScore(reputationScore);
     } catch (err) {
       console.error('Error fetching reputation:', err);
@@ -289,6 +358,35 @@ export const ReputationScoreDisplay: React.FC = () => {
                     </ul>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Mint Badge Button - Hiển thị độc lập khi điểm số > 50 */}
+            {score.totalScore >= 50 && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl">
+                <div className="flex items-start gap-3 mb-3">
+                  <Sparkles className="w-5 h-5 text-purple-400 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-purple-300 mb-1">
+                      Bạn đủ điều kiện nhận Soulbound Badge!
+                    </h4>
+                    <p className="text-xs text-grey-400">
+                      Mint NFT badge {getTierFromScore(score.totalScore).name} để chứng minh reputation của bạn on-chain
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleMint}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/50"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-5 h-5" />
+                  )}
+                  {loading ? 'Minting...' : `Mint ${getTierFromScore(score.totalScore).name} Badge`}
+                </button>
               </div>
             )}
           </div>

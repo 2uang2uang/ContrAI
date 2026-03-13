@@ -18,10 +18,9 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    // Mạng Moonbase Alpha (Testnet của Moonbeam trên Polkadot)
-    moonbase: {
-      url: "https://rpc.api.moonbase.moonbeam.network",
-      chainId: 1287,
+    paseoAssetHub: {
+      url: "https://services.polkadothub-rpc.com/testnet", // Thử endpoint mới
+      chainId: 420420417, // Chain ID chính xác cho Paseo Asset Hub
       accounts: [PRIVATE_KEY],
     },
   },

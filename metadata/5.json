@@ -1,0 +1,9 @@
+{
+  "name": "ContrAI Diamond Badge",
+  "description": "Huy hiệu chứng nhận uy tín cấp độ Silver trên mạng Paseo.",
+  "image": "ipfs://bafybeihpuvdwx4txtdsnb5wctosecn2giouie3nhur4onnckuhkafrw2yy/diamon.webp",
+  "attributes": [
+    { "trait_type": "Tier", "value": "Diamond" },
+    { "trait_type": "Basis Points", "value": "7500-8999" }
+  ]
+}
