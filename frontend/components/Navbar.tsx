@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Hexagon, Sun, Moon, Wallet } from 'lucide-react';
-import { useAccount, useConnect, useDisconnect } from '@luno-kit/react';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 interface NavbarProps {
     isDarkMode: boolean;
@@ -10,15 +10,15 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
-  const { account } = useAccount();
+  const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
   const handleConnect = () => {
-    if (account) {
+    if (isConnected) {
       disconnect();
     } else if (connectors.length > 0) {
-      connect({ connectorId: connectors[0].id });
+      connect({ connector: connectors[0] });
     }
   };
 
@@ -64,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
           className="flex items-center gap-2 bg-grey-900 dark:bg-white text-white dark:text-grey-900 hover:bg-grey-700 dark:hover:bg-grey-200 transition-colors px-5 py-2.5 rounded-lg text-sm font-bold tracking-tight shadow-md"
         >
           <Wallet className="w-4 h-4" />
-          {account ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}` : 'Connect Wallet'}
+          {isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect Wallet'}
         </button>
       </div>
     </nav>

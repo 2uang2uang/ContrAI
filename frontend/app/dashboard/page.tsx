@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { ChatMessage, ChatSession } from "@/types";
 import { ReputationScoreDisplay } from "@/components/ReputationScoreDisplay";
-import { useAccount } from "@luno-kit/react";
+import { useAccount } from "wagmi";
 
 const MOCK_SESSIONS: ChatSession[] = [
     {
@@ -66,7 +66,7 @@ const SUGGESTIONS = [
 ];
 
 export default function Dashboard() {
-    const { account } = useAccount();
+    const { address } = useAccount();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -106,8 +106,8 @@ export default function Dashboard() {
             const API_URL =
                 process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-            // Sử dụng testAddress nếu có, nếu không thì dùng account.address
-            const addressToUse = testAddress.trim() || account?.address;
+            // Sử dụng testAddress nếu có, nếu không thì dùng address
+            const addressToUse = testAddress.trim() || address;
 
             if (!addressToUse) {
                 throw new Error(

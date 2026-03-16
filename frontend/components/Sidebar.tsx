@@ -3,7 +3,7 @@
 import React from 'react';
 import { MessageSquarePlus, MessageSquare, Bookmark, ChevronRight } from 'lucide-react';
 import { ChatSession } from '@/types';
-import { useAccount } from '@luno-kit/react';
+import { useAccount } from 'wagmi';
 
 interface SidebarProps {
   sessions: ChatSession[];
@@ -13,15 +13,15 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat }) => {
-  const { account } = useAccount();
+  const { address } = useAccount();
   
   // Lấy 3 ký tự đầu và 4 ký tự cuối của địa chỉ
-  const displayAddress = account 
-    ? `${account.address.slice(0, 3)}...${account.address.slice(-4)}`
+  const displayAddress = address 
+    ? `${address.slice(0, 3)}...${address.slice(-4)}`
     : '';
   
-  const avatarText = account 
-    ? account.address.slice(0, 3)
+  const avatarText = address 
+    ? address.slice(0, 3)
     : '';
 
   return (
@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat })
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-grey-900 dark:text-grey-50 truncate font-mono">{displayAddress}</p>
-            <p className="text-xs text-grey-500 dark:text-grey-400">{account ? 'Connected' : 'Not Connected'}</p>
+            <p className="text-xs text-grey-500 dark:text-grey-400">{address ? 'Connected' : 'Not Connected'}</p>
           </div>
           <ChevronRight className="w-4 h-4 text-grey-400 dark:text-grey-500" />
         </div>

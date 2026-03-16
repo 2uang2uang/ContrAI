@@ -1,7 +1,7 @@
 "use client";
 
-import { LunoKitProvider } from "@luno-kit/ui";
-import { lunoConfig } from "@/Config/LunoConfig";
+import { WagmiProvider } from 'wagmi';
+import { wagmiConfig } from "@/Config/wagmi.config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -9,10 +9,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <LunoKitProvider config={lunoConfig}>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
         {children}
-      </LunoKitProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

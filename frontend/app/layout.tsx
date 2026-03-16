@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { DM_Sans, DM_Serif_Display } from 'next/font/google'
 import './globals.css'
-import { WalletProvider } from '@/providers/luno-provider'
+import { WalletProvider } from '@/providers/wallet-provider'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],

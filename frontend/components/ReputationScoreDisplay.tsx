@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import { Shield, Vote, Coins, Activity, RefreshCw, Loader2, Sparkles, AlertTriangle, Brain } from 'lucide-react';
 import { getMintSignature, getReputationScore, ReputationScore } from '@/services/reputationService';
-import { useAccount } from '@luno-kit/react';
+import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
 
 
 
 export const ReputationScoreDisplay: React.FC = () => {
-  const { account } = useAccount();
+  const { address } = useAccount();
   const [score, setScore] = useState<ReputationScore | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export const ReputationScoreDisplay: React.FC = () => {
   const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || ""; 
 
   const handleMint = async () => {
-  if (!score || !account) return;
+  if (!score || !address) return;
   setLoading(true);
 
   try {
@@ -77,7 +77,7 @@ export const ReputationScoreDisplay: React.FC = () => {
 };
 
   const fetchScore = async () => {
-    if (!account?.address) {
+    if (!address) {
       setError('Please connect your wallet first');
       return;
     }
@@ -86,7 +86,7 @@ export const ReputationScoreDisplay: React.FC = () => {
     setError(null);
 
     try {
-      const reputationScore = await getReputationScore(account.address);
+      const reputationScore = await getReputationScore(address);
       
       // 🔥 HARDCODE ĐIỂM SỐ ĐỂ TEST - XÓA DÒNG NÀY SAU KHI TEST XONG
       reputationScore.totalScore = 85; // Thay đổi số này để test các tier khác nhau
@@ -100,7 +100,7 @@ export const ReputationScoreDisplay: React.FC = () => {
     }
   };
 
-  if (!account) {
+  if (!address) {
     return (
       <div className="w-full max-w-2xl bg-white dark:bg-grey-900 border border-grey-200 dark:border-grey-800 rounded-2xl p-8 text-center">
         <Shield className="w-12 h-12 text-grey-400 mx-auto mb-4" />
