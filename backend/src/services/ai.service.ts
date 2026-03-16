@@ -209,35 +209,77 @@ export async function chatWithAI(
 
   console.log(`💬 AI chat for ${address}: ${query}`);
 
-  const prompt = `Polkadot reputation assistant. Answer based on ACTUAL data only.
+  // Phân tích loại câu hỏi để tạo response phù hợp
+  const queryLower = query.toLowerCase().trim();
+  const isGreeting = /^(chào|hello|hi|xin chào|hey|chào bạn)$/i.test(queryLower);
+  const isHelp = /^(help|giúp|hướng dẫn|làm gì|có thể làm gì)$/i.test(queryLower);
+  
+  let prompt = '';
 
-Question: "${query}"
+  if (isGreeting || isHelp) {
+    // PROMPT ĐẶC BIỆT CHO GREETING/HELP
+    prompt = `Bạn là DotRepute AI - trợ lý thông minh chuyên phân tích uy tín trên Polkadot.
+
+User vừa ${isGreeting ? 'chào hỏi' : 'hỏi về hướng dẫn'}: "${query}"
 Address: ${address}
 
-Data:
-- Identity: ${onChainData.identity.hasIdentity ? 'Yes' : 'No'}, Verified: ${onChainData.identity.isVerified}, Judgements: ${onChainData.identity.judgements}
-- Governance: ${onChainData.governance.votesCount} votes, ${onChainData.governance.proposalsCount} proposals
-- Staking: ${parseFloat(onChainData.staking.totalStaked) / 1e10} DOT, Nominator: ${onChainData.staking.isNominator}
-- Activity: ${onChainData.activity.transactionCount} transactions
+Dữ liệu ví hiện tại:
+- Identity: ${onChainData.identity.hasIdentity ? 'Có' : 'Chưa có'}, Verified: ${onChainData.identity.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}
+- Governance: ${onChainData.governance.votesCount} lượt vote
+- Staking: ${(parseFloat(onChainData.staking.totalStaked) / 1e10).toFixed(2)} DOT
+- Activity: ${onChainData.activity.transactionCount} giao dịch
 
-Answer in Vietnamese. Be specific and factual based on real data.`;
+NHIỆM VỤ: Trả lời thân thiện, giới thiệu bản thân và đưa ra 3-4 gợi ý cụ thể dựa trên tình trạng ví.
+
+VÍ DỤ FORMAT:
+"Chào bạn! 👋 Tôi là DotRepute AI, trợ lý phân tích uy tín trên Polkadot. 
+
+Tôi có thể giúp bạn:
+• 📊 Phân tích reputation score chi tiết
+• 🏛️ Hướng dẫn tham gia governance 
+• 💰 Tư vấn chiến lược staking
+• 🔍 Kiểm tra hoạt động on-chain
+
+${onChainData.activity.transactionCount < 10 ? 'Tôi thấy bạn mới bắt đầu trên Polkadot. Bạn muốn tôi hướng dẫn các bước đầu tiên không?' : 'Ví của bạn khá tích cực! Bạn muốn tôi phân tích reputation score không?'}"
+
+Trả lời bằng tiếng Việt, thân thiện và cụ thể.`;
+  } else {
+    // PROMPT THÔNG THƯỜNG CHO CÂU HỎI KHÁC
+    prompt = `Bạn là DotRepute AI - trợ lý chuyên gia phân tích uy tín trên Polkadot. Trả lời dựa trên dữ liệu THỰC TẾ.
+
+Câu hỏi: "${query}"
+Address: ${address}
+
+Dữ liệu on-chain:
+- Identity: ${onChainData.identity.hasIdentity ? 'Có' : 'Chưa có'}, Verified: ${onChainData.identity.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}, Judgements: ${onChainData.identity.judgements}
+- Governance: ${onChainData.governance.votesCount} votes, ${onChainData.governance.proposalsCount} proposals
+- Staking: ${(parseFloat(onChainData.staking.totalStaked) / 1e10).toFixed(2)} DOT, Nominator: ${onChainData.staking.isNominator ? 'Có' : 'Không'}
+- Activity: ${onChainData.activity.transactionCount} giao dịch tổng cộng
+
+HƯỚNG DẪN TRẢ LỜI:
+- Trả lời bằng tiếng Việt, chuyên nghiệp nhưng thân thiện
+- Dựa vào dữ liệu thực tế, không bịa đặt
+- Đưa ra lời khuyên cụ thể nếu phù hợp
+- Sử dụng emoji phù hợp để sinh động
+- Nếu không hiểu câu hỏi, hỏi lại để làm rõ`;
+  }
 
   // Retry logic for handling 503 errors - OPTIMIZED
-  const maxRetries = 2; // Giảm từ 3 xuống 2
-  const retryDelays = [1000, 2000]; // Giảm từ [2s, 5s, 10s] xuống [1s, 2s]
+  const maxRetries = 2;
+  const retryDelays = [1000, 2000];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Add timeout to prevent hanging (60s for chat responses - increased)
+      // Add timeout to prevent hanging (60s for chat responses)
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('AI request timeout')), 60000) // 60s timeout
+        setTimeout(() => reject(new Error('AI request timeout')), 60000)
       );
 
       const aiPromise = ai.models.generateContent({
-        model: 'gemini-3-flash-preview', // Back to original model
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-          temperature: 0.1,
+          temperature: isGreeting || isHelp ? 0.3 : 0.1, // Greeting linh hoạt hơn
           topP: 0.9,
           topK: 40,
         },
