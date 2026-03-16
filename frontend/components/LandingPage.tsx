@@ -15,6 +15,7 @@ import {
     Sun,
     Wallet,
 } from "lucide-react";
+import Leaderboard from "./Leaderboard";
 import { useAccount, useConnect, useDisconnect } from "@luno-kit/react";
 
 interface LandingPageProps {
@@ -212,7 +213,7 @@ const LandingNavbar = ({
                         Governance
                     </a>
                     <a
-                        href="#"
+                        href="/leaderboard"
                         className="hover:text-brand-pink transition-colors"
                     >
                         Leaderboard
@@ -538,6 +539,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             delay={0.4}
                         />
                     </div>
+                </div>
+            </section>
+
+            {/* LEADERBOARD */}
+            <section id="leaderboard" className="py-16">
+                <div className="container mx-auto px-6 lg:px-12">
+                    <div className="mb-8">
+                        <h2 className="font-serif text-4xl md:text-5xl text-grey-900 dark:text-white">Community Leaderboard</h2>
+                        <p className="text-grey-500 dark:text-grey-400 mt-2">See the top participants and reputation holders across the network.</p>
+                    </div>
+                    <Leaderboard />
                 </div>
             </section>
 

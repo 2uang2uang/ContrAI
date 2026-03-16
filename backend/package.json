@@ -24,6 +24,7 @@
     "@polkadot/keyring": "^14.0.1",
     "@polkadot/util": "^14.0.1",
     "@polkadot/util-crypto": "^14.0.1",
+    "@supabase/supabase-js": "^2.99.1",
     "axios": "^1.13.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { OnChainData } from './subscan.service';
+import { dbService } from './db.service';
 
 // Debug: Check if API key is loaded
 if (!process.env.GEMINI_API_KEY) {
@@ -60,15 +61,11 @@ export interface ReputationScore {
   improvements: string[];
   insights: string;
 }
-
-/**
- * Calculate reputation score using AI with retry logic
- */
 export async function calculateReputationWithAI(
   address: string,
-  onChainData: OnChainData
-): Promise<ReputationScore> {
-  // Check cache first
+  onChainData: OnChainData // Lưu ý đổi thành type OnChainData của bạn nếu cần
+): Promise<ReputationScore> { // Chỗ này Promise<ReputationScore> theo type của bạn
+  // Check cache first (Local RAM)
   const cached = getCached(reputationCache, address);
   if (cached) {
     return cached;
@@ -76,7 +73,7 @@ export async function calculateReputationWithAI(
 
   console.log(`🤖 AI analyzing reputation for ${address}`);
 
-  const recentTransfersSummary = onChainData.recentTransfers?.map(t =>
+  const recentTransfersSummary = onChainData.recentTransfers?.map((t: any) =>
     `[${new Date(t.block_timestamp * 1000).toISOString()}] ${t.from === address ? 'Gửi' : 'Nhận'} ${t.amount} ${t.asset_symbol} ${t.from === address ? 'tới' : 'từ'} ${t.to === address ? t.from : t.to}`
   ).join('\n') || 'Không có giao dịch gần đây';
 
@@ -118,18 +115,18 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
 }`;
 
   // Retry logic for handling 503 errors - OPTIMIZED
-  const maxRetries = 2; // Giảm từ 3 xuống 2
-  const retryDelays = [1000, 2000]; // Giảm từ [2s, 5s, 10s] xuống [1s, 2s]
+  const maxRetries = 2;
+  const retryDelays = [1000, 2000];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Add timeout to prevent hanging (60s for reputation calculation - increased)
+      // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('AI request timeout')), 60000) // 60s timeout
+        setTimeout(() => reject(new Error('AI request timeout')), 60000)
       );
 
       const aiPromise = ai.models.generateContent({
-        model: 'gemini-3-flash-preview', // Back to original model
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           temperature: 0.1,
@@ -145,8 +142,18 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
 
       const aiScore = JSON.parse(text);
 
-      // Cache the result
+      // 1. Lưu vào cache tạm thời (RAM)
       setCache(reputationCache, address, aiScore);
+
+      // 2. LƯU VÀO DATABASE (Supabase)
+      try {
+        await dbService.upsertReputationScore(address, aiScore);
+        console.log(`✅ Đã lưu điểm uy tín của ${address} vào Database thành công`);
+      } catch (dbError) {
+        // Ta dùng try/catch bọc ở đây để nếu DB có lỗi (ví dụ rớt mạng), 
+        // nó chỉ log ra lỗi chứ không làm chết API (Frontend vẫn nhận được điểm)
+        console.error(`❌ Lỗi khi lưu điểm vào Database cho ${address}:`, dbError);
+      }
 
       return aiScore;
     } catch (error: any) {
@@ -158,7 +165,8 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
       if ((is503Error || isTimeout) && !isLastAttempt) {
         const delay = retryDelays[attempt];
         console.log(`⚠️ AI service ${isTimeout ? 'timeout' : 'unavailable (503)'}, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
-        await sleep(delay);
+        // Giả sử bạn có hàm sleep
+        await new Promise(res => setTimeout(res, delay));
         continue;
       }
 
