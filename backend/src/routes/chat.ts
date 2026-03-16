@@ -70,61 +70,6 @@ function calculateScore(data: OnChainData) {
   };
 }
 
-/**
- * @swagger
- * /api/chat:
- *   post:
- *     summary: Chat with AI about wallet reputation
- *     tags: [Chat]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - address
- *               - query
- *             properties:
- *               address:
- *                 type: string
- *                 description: Polkadot wallet address
- *                 example: "15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5"
- *               query:
- *                 type: string
- *                 description: User's question or query
- *                 example: "What is my reputation score?"
- *     responses:
- *       200:
- *         description: AI response generated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 address:
- *                   type: string
- *                 query:
- *                   type: string
- *                 response:
- *                   type: string
- *                   description: AI-generated response
- *                 onChainData:
- *                   $ref: '#/components/schemas/OnChainData'
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- *       400:
- *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- */
 router.post('/', async (req, res, next) => {
   try {
     const { address, query } = req.body;

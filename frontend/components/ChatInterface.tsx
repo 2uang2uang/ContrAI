@@ -21,6 +21,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoadin
     scrollToBottom();
   }, [messages, isLoading]);
 
+  // Hàm kiểm tra xem có nên hiển thị ReputationCard không
+  const shouldShowReputationCard = (message: ChatMessage): boolean => {
+    if (!message.data) return false;
+    
+    // Kiểm tra nếu message này là kết quả từ "My Reputation" button
+    const userMessage = messages.find(m => 
+      m.role === 'user' && 
+      m.timestamp.getTime() < message.timestamp.getTime() &&
+      Math.abs(message.timestamp.getTime() - m.timestamp.getTime()) < 5000 // Trong vòng 5 giây
+    );
+    
+    if (!userMessage) return false;
+    
+    // Các từ khóa liên quan đến reputation
+    const reputationKeywords = [
+      'reputation', 'uy tín', 'điểm', 'score', 'phân tích', 'đánh giá',
+      'my reputation', 'reputation status', 'reputation score',
+      'tính điểm', 'điểm số', 'xếp hạng', 'thứ hạng', 'level',
+      'identity', 'governance', 'staking', 'activity',
+      'danh tiếng', 'tín nhiệm', 'đáng tin cậy'
+    ];
+    
+    const queryLower = userMessage.text.toLowerCase();
+    
+    // Kiểm tra xem câu hỏi có chứa từ khóa reputation không
+    return reputationKeywords.some(keyword => queryLower.includes(keyword));
+  };
+
   return (
     <div className="flex-1 overflow-y-auto px-4 sm:px-6 md:px-12 py-8 space-y-8">
       {messages.length === 0 && (
@@ -64,7 +92,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoadin
                         </div>
                     )}
                     
-                    {message.data && (
+                    {message.data && shouldShowReputationCard(message) && (
                         <div className="animate-[slideUp_0.3s_ease-out]">
                              <ReputationCard data={message.data} />
                         </div>

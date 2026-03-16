@@ -14,8 +14,8 @@ import {
     LayoutDashboard,
 } from "lucide-react";
 import { ChatMessage, ChatSession } from "@/types";
-import { ReputationScoreDisplay } from "@/components/ReputationScoreDisplay";
 import { useAccount } from "wagmi";
+import { getReputationScore } from "@/services/reputationService";
 
 const MOCK_SESSIONS: ChatSession[] = [
     {
@@ -42,8 +42,8 @@ const SUGGESTIONS = [
     {
         label: "My Reputation",
         icon: Shield,
-        query: "Show my reputation status and score",
-        action: "calculate-reputation", // Action type
+        query: "Show my reputation status and score", // Đảm bảo chứa từ khóa "reputation" và "score"
+        action: "calculate-reputation",
     },
     {
         label: "Governance",
@@ -86,107 +86,93 @@ export default function Dashboard() {
     const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
     const handleSendMessage = async (
-        text: string,
-        isReputationQuery = false,
-    ) => {
-        if (!text.trim() || isLoading) return;
+            text: string,
+            isReputationQuery = false,
+        ) => {
+            if (!text.trim() || isLoading) return;
 
-        const userMessage: ChatMessage = {
-            id: Date.now().toString(),
-            role: "user",
-            text: text,
-            timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, userMessage]);
-        setInput("");
-        setIsLoading(true);
-
-        try {
-            const API_URL =
-                process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-            // Sử dụng testAddress nếu có, nếu không thì dùng address
-            const addressToUse = testAddress.trim() || address;
-
-            if (!addressToUse) {
-                throw new Error(
-                    "Please connect your wallet or enter a test address",
-                );
-            }
-
-            // ĐÃ SỬA: Phân nhánh rõ ràng gọi API Calculate khi yêu cầu tính điểm
-            if (isReputationQuery && addressToUse) {
-                const response = await fetch(`${API_URL}/api/reputation/calculate`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        address: addressToUse,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to calculate reputation from backend");
-                }
-
-                const data = await response.json();
-
-                const botMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: "model",
-                    text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
-                    data: data, // Truyền toàn bộ cục dữ liệu (gồm score chứa Sybil Risk, Behavioral...) vào đây
-                    timestamp: new Date(),
-                };
-
-                setMessages((prev) => [...prev, botMessage]);
-            } else {
-                // CHAT BÌNH THƯỜNG: Vẫn gọi API Chat
-                const response = await fetch(`${API_URL}/api/chat`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        address: addressToUse,
-                        query: text,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to get response from backend");
-                }
-
-                const data = await response.json();
-
-                const botMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: "model",
-                    text: data.response,
-                    data: data.onChainData, 
-                    timestamp: new Date(),
-                };
-
-                setMessages((prev) => [...prev, botMessage]);
-            }
-        } catch (error) {
-            console.error(error);
-            const errorMessage: ChatMessage = {
-                id: (Date.now() + 1).toString(),
-                role: "model",
-                text:
-                    error instanceof Error
-                        ? error.message
-                        : "I'm having trouble connecting to the network. Please try again later.",
+            const userMessage: ChatMessage = {
+                id: Date.now().toString(),
+                role: "user",
+                text: text,
                 timestamp: new Date(),
             };
-            setMessages((prev) => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+
+            setMessages((prev) => [...prev, userMessage]);
+            setInput("");
+            setIsLoading(true);
+
+            try {
+                const API_URL =
+                    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+                // Sử dụng testAddress nếu có, nếu không thì dùng address
+                const addressToUse = testAddress.trim() || address;
+
+                if (!addressToUse) {
+                    throw new Error(
+                        "Please connect your wallet or enter a test address",
+                    );
+                }
+
+                if (isReputationQuery && addressToUse) {
+                    // SỬ DỤNG SERVICE THAY VÌ GỌI TRỰC TIẾP
+                    const scoreData = await getReputationScore(addressToUse);
+
+                    const botMessage: ChatMessage = {
+                        id: (Date.now() + 1).toString(),
+                        role: "model",
+                        text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
+                        data: { score: scoreData },
+                        timestamp: new Date(),
+                    };
+
+                    setMessages((prev) => [...prev, botMessage]);
+                } else {
+                    // CHAT BÌNH THƯỜNG: Vẫn gọi API Chat
+                    const response = await fetch(`${API_URL}/api/chat`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            address: addressToUse,
+                            query: text,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to get response from backend");
+                    }
+
+                    const data = await response.json();
+
+                    const botMessage: ChatMessage = {
+                        id: (Date.now() + 1).toString(),
+                        role: "model",
+                        text: data.response,
+                        data: data.onChainData, 
+                        timestamp: new Date(),
+                    };
+
+                    setMessages((prev) => [...prev, botMessage]);
+                }
+            } catch (error) {
+                console.error(error);
+                const errorMessage: ChatMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: "model",
+                    text:
+                        error instanceof Error
+                            ? error.message
+                            : "I'm having trouble connecting to the network. Please try again later.",
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, errorMessage]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
     const handleNewChat = () => {
         setMessages([]);
@@ -197,15 +183,9 @@ export default function Dashboard() {
     const handleSuggestionClick = async (
         suggestion: (typeof SUGGESTIONS)[0],
     ) => {
-        if (suggestion.action === "calculate-reputation") {
-            // Nếu click vào My Reputation -> Bật màn hình Display và xóa chat cũ
-            setShowReputationScore(true);
-            setMessages([]); 
-        } else {
-            // Các nút khác thì chat bình thường
-            setShowReputationScore(false);
-            await handleSendMessage(suggestion.query, false);
-        }
+        setShowReputationScore(false);
+        const isReputation = suggestion.action === "calculate-reputation";
+        await handleSendMessage(suggestion.query, isReputation);
     };
 
     return (
@@ -246,16 +226,8 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Reputation Score Display - hiển thị khi showReputationScore = true */}
-                    {showReputationScore && messages.length === 0 ? (
-                        <div className="flex-1 overflow-y-auto p-6">
-                            <div className="flex justify-center">
-                                <ReputationScoreDisplay />
-                            </div>
-                        </div>
-                    ) : (
                         <ChatInterface messages={messages} isLoading={isLoading} />
-                    )}
+                    
 
                     <div className="p-4 sm:p-6 bg-grey-50 dark:bg-grey-950 border-t border-grey-200 dark:border-grey-800 z-20 transition-colors duration-300">
                         <div className="max-w-4xl mx-auto space-y-4">
