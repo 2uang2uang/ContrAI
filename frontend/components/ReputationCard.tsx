@@ -15,18 +15,14 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
   const [loading, setLoading] = useState(false);
   const [reputationData, setReputationData] = useState(data);
 
-  // FETCH DATA NẾU COMPONENT BỊ GỌI MÀ KHÔNG CÓ DATA TỪ PARENT
   useEffect(() => {
     const fetchData = async () => {
-      // Chỉ fetch nếu chưa có data và ví đã kết nối
       if (!data && address) {
         setLoading(true);
         try {
           const scoreResult = await getReputationScore(address);
           setReputationData(scoreResult);
-        } catch (error) {
-          console.error('Error fetching reputation score:', error);
-        } finally {
+        } catch {} finally {
           setLoading(false);
         }
       }
@@ -34,18 +30,15 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
     fetchData();
   }, [address, data]);
 
-  // BẢO VỆ CHỐNG SẬP
   const currentData = reputationData || data;
   if (!currentData) {
     if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-pink-accent" /></div>;
     return null;
   }
 
-  // BÓC TÁCH DỮ LIỆU
   const scoreData = currentData.score?.totalScore !== undefined ? currentData.score : currentData;
   const onChainData = currentData.onChainData || currentData;
 
-  // Biến score này là một SỐ NGUYÊN (ví dụ: 85)
   const score = scoreData?.totalScore ?? scoreData?.score ?? 0;
   const rank = scoreData?.rank || 'Unranked';
   const level = scoreData?.level || 'Newcomer';
@@ -75,7 +68,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
     ? `${onChainData.activity.transactionCount} txs` 
     : 'No activity';
 
-  // HÀM TÍNH TIER (Dựa vào điểm số)
   const getTierFromScore = (totalScore: number): { name: string; value: number } => {
     if (totalScore >= 97) return { name: 'Diamond', value: 5 }; 
     if (totalScore >= 90) return { name: 'Gold', value: 4 };    
@@ -84,7 +76,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
     return { name: 'Stone', value: 1 };                         
   };
 
-  // LOGIC MINT BADGE TỪ BACKEND
   const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || ""; 
   const handleMint = async () => {
     if (!score || !address) return;
@@ -121,7 +112,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
       alert("🎉 Chúc mừng! Bạn đã xác thực điểm uy tín và Mint Badge thành công!");
 
     } catch (err: any) {
-      console.error("Lỗi thực thi giao dịch:", err);
       alert(`Lỗi: ${err.reason || err.message}`);
     } finally {
       setLoading(false);
@@ -163,7 +153,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* BREAKDOWN ĐIỂM SỐ CHI TIẾT */}
         <div className="mb-6 p-4 bg-grey-50 dark:bg-grey-950 border border-grey-200 dark:border-grey-800 rounded-xl">
           <h4 className="text-sm font-semibold text-grey-900 dark:text-grey-50 mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-pink-accent" />
@@ -171,7 +160,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </h4>
           
           <div className="space-y-3">
-            {/* Identity Score */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-500" />
@@ -191,7 +179,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               </div>
             </div>
 
-            {/* Governance Score */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Vote className="w-4 h-4 text-purple-500" />
@@ -211,7 +198,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               </div>
             </div>
 
-            {/* Economic/Staking Score */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Coins className="w-4 h-4 text-pink-accent" />
@@ -231,7 +217,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               </div>
             </div>
 
-            {/* Activity Score */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-orange-500" />
@@ -251,7 +236,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               </div>
             </div>
 
-            {/* Behavioral Score (nếu có) */}
             {behavioralScore > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -274,7 +258,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
             )}
           </div>
 
-          {/* Tổng điểm */}
           <div className="mt-4 pt-3 border-t border-grey-200 dark:border-grey-800">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-grey-900 dark:text-grey-50">Total Score</span>
@@ -286,7 +269,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* HIỂN THỊ SYBIL RISK NẾU CÓ */}
         {sybilRisk && sybilRisk.score > 0.3 && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-500 rounded-xl flex flex-col gap-2">
             <h4 className="text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
@@ -425,7 +407,6 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </div>
         )}
 
-        {/* NÚT MINT - DI CHUYỂN RA NGOÀI */}
         {score >= 5 && (
           <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl">
             <div className="flex items-start gap-3 mb-3">

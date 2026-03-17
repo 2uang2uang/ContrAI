@@ -44,9 +44,6 @@ export interface ReputationScore {
   insights: string;
 }
 
-/**
- * Main function: Lấy reputation score của một địa chỉ từ backend
- */
 export async function getReputationScore(address: string): Promise<ReputationScore> {
   try {
     const response = await fetch(`${API_URL}/api/reputation/calculate`, {
@@ -69,14 +66,10 @@ export async function getReputationScore(address: string): Promise<ReputationSco
 
     throw new Error('Invalid backend response');
   } catch (error) {
-    console.error('Error getting reputation score:', error);
     throw error;
   }
 }
 
-/**
- * Get on-chain data only (without AI scoring)
- */
 export async function getOnChainData(address: string): Promise<OnChainData> {
   try {
     const response = await fetch(`${API_URL}/api/reputation/${address}`);
@@ -93,7 +86,6 @@ export async function getOnChainData(address: string): Promise<OnChainData> {
 
     throw new Error('Invalid backend response');
   } catch (error) {
-    console.error('Error getting on-chain data:', error);
     throw error;
   }
   
@@ -109,6 +101,6 @@ export async function getMintSignature(address: string, score: number, snapshotB
     }),
   }).then(res => {
     if (!res.ok) throw new Error("Backend error");
-    return res.json(); // Trả về dữ liệu JSON
+    return res.json();
   });
 }

@@ -15,7 +15,6 @@ const Leaderboard: React.FC = () => {
       const data = await getLeaderboard(10);
       setLeaderboard(data);
     } catch (err) {
-      console.error('Failed to fetch leaderboard:', err);
       setError('Failed to load leaderboard data');
     } finally {
       setLoading(false);

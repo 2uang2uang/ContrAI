@@ -53,11 +53,9 @@ export default function Dashboard() {
     const [showReputationScore, setShowReputationScore] = useState(false);
     const [testAddress, setTestAddress] = useState("");
     
-    // Các state quản lý lịch sử chat
     const [sessions, setSessions] = useState<any[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
-    // Xử lý Dark mode
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add("dark");
@@ -68,7 +66,6 @@ export default function Dashboard() {
 
     const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-    // Fetch danh sách sessions
     const fetchSessions = useCallback(async (walletAddress: string) => {
         try {
             const response = await fetch(`/api/user-sessions/${walletAddress}`);
@@ -82,12 +79,9 @@ export default function Dashboard() {
                 }));
                 setSessions(formattedSessions);
             }
-        } catch (error) {
-            console.error('Failed to load sessions:', error);
-        }
+        } catch {}
     }, []);
 
-    // Load sessions khi có address
     useEffect(() => {
         const addressToUse = testAddress.trim() || address;
         if (addressToUse) {
@@ -95,14 +89,12 @@ export default function Dashboard() {
         }
     }, [address, testAddress, fetchSessions]);
 
-    // Load messages của một session cụ thể
     const loadSessionMessages = async (sessionId: string) => {
         setCurrentSessionId(sessionId);
         setIsLoading(true);
         setMessages([]);
         
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
             const response = await fetch(`/api/chat/messages/${sessionId}`);
             if (response.ok) {
                 const dbMessages = await response.json();
@@ -115,11 +107,9 @@ export default function Dashboard() {
                 }));
                 setMessages(formattedMessages);
             }
-        } catch (error) {
-            console.error('Failed to load session messages:', error);
-        } finally {
+        } catch {} finally {
             setIsLoading(false);
-            setSidebarOpen(false); // Đóng sidebar trên mobile sau khi chọn
+            setSidebarOpen(false);
         }
     };
 
@@ -131,7 +121,7 @@ export default function Dashboard() {
             role: "user",
             text: text,
             timestamp: new Date(),
-            isReputationQuery, // Thêm flag để đánh dấu
+            isReputationQuery,
         };
 
         setMessages((prev) => [...prev, userMessage]);
@@ -139,14 +129,12 @@ export default function Dashboard() {
         setIsLoading(true);
 
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
             const addressToUse = testAddress.trim() || address;
 
             if (!addressToUse) {
                 throw new Error("Please connect your wallet or enter a test address");
             }
 
-            // TẤT CẢ ĐỀU GỌI QUA CHAT API ĐỂ LƯU LỊCH SỬ
             const response = await fetch(`/api/chat`, {
                 method: "POST",
                 headers: {
@@ -165,10 +153,9 @@ export default function Dashboard() {
 
             const data = await response.json();
 
-            // Cập nhật sessionId nếu có session mới được tạo
             if (data.sessionId && !currentSessionId) {
                 setCurrentSessionId(data.sessionId);
-                fetchSessions(addressToUse); // Load lại danh sách sidebar
+                fetchSessions(addressToUse);
             }
 
             const botMessage: ChatMessage = {
@@ -179,10 +166,8 @@ export default function Dashboard() {
                 timestamp: new Date(),
             };
 
-            console.log('Chat response data:', data.onChainData); // Debug log
             setMessages((prev) => [...prev, botMessage]);
         } catch (error) {
-            console.error(error);
             const errorMessage: ChatMessage = {
                 id: (Date.now() + 1).toString(),
                 role: "model",
@@ -199,7 +184,7 @@ export default function Dashboard() {
 
     const handleNewChat = () => {
         setMessages([]);
-        setCurrentSessionId(null); // Xóa session id khi bắt đầu chat mới
+        setCurrentSessionId(null);
         setShowReputationScore(false);
         setSidebarOpen(false);
     };
@@ -207,7 +192,7 @@ export default function Dashboard() {
     const handleSuggestionClick = async (suggestion: (typeof SUGGESTIONS)[0]) => {
         setShowReputationScore(false);
         const isReputation = suggestion.action === "calculate-reputation";
-        await handleSendMessage(suggestion.query, isReputation); // Truyền flag
+        await handleSendMessage(suggestion.query, isReputation);
     };
 
     return (

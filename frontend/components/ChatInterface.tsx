@@ -40,7 +40,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoadin
           key={message.id}
           className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
         >
-          {/* Avatar */}
           <div className={`
             w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1
             ${message.role === 'user' 
@@ -50,7 +49,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, isLoadin
             {message.role === 'user' ? <UserIcon size={14} /> : <Bot size={14} />}
           </div>
 
-          {/* Message Content */}
           <div className={`max-w-[85%] sm:max-w-[75%] lg:max-w-[65%]`}>
             {message.role === 'user' ? (
                 <div className="bg-white dark:bg-grey-800 text-grey-900 dark:text-grey-50 px-5 py-3 rounded-2xl rounded-tr-sm shadow-sm border border-grey-200 dark:border-grey-800">
