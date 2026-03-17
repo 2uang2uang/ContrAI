@@ -63,9 +63,8 @@ export interface ReputationScore {
 }
 export async function calculateReputationWithAI(
   address: string,
-  onChainData: OnChainData // Lưu ý đổi thành type OnChainData của bạn nếu cần
-): Promise<ReputationScore> { // Chỗ này Promise<ReputationScore> theo type của bạn
-  // Check cache first (Local RAM)
+  onChainData: OnChainData 
+): Promise<ReputationScore> { 
   const cached = getCached(reputationCache, address);
   if (cached) {
     return cached;
@@ -92,9 +91,9 @@ Nhiệm vụ của bạn là đánh giá UY TÍN (Reputation) của ví này, KH
 ${recentTransfersSummary}
 
 HƯỚNG DẪN CHẤM ĐIỂM BẰNG PHÂN TÍCH HÀNH VI:
-- Tính "totalScore" (0-100).
-- "breakdown" gồm: identity, governance, staking, activity, VÀ behavioral (chất lượng hành vi tổng thể).
-- Phân tích Rủi ro Sybil (sybilRisk): Dựa vào lịch sử giao dịch. Nếu ví nhận tiền liên tục từ 1 nguồn lạ rồi ngay lập tức chuyển đi, hoặc thời gian dồn dập bất thường -> Rủi ro cao (score tiến gần 1.0). Nếu giao dịch tự nhiên, rải rác, có staking -> Rủi ro thấp (tiến về 0.0).
+1. Tính điểm chi tiết (breakdown): identity (0-25), governance (0-30), staking (0-25), activity (0-20), behavioral (0-20).
+2. "totalScore" BẮT BUỘC phải bằng tổng các điểm thành phần cộng lại. 
+3. Nếu phát hiện Rủi ro Sybil cao (>0.7), hãy trừ điểm trực tiếp vào cột "behavioral" thay vì trừ vào tổng số một cách tùy tiện.
 
 BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Không thêm text bên ngoài):
 {

@@ -163,7 +163,131 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </div>
         </div>
 
-        {sybilRisk && sybilRisk.score > 0.7 && (
+        {/* BREAKDOWN ĐIỂM SỐ CHI TIẾT */}
+        <div className="mb-6 p-4 bg-grey-50 dark:bg-grey-950 border border-grey-200 dark:border-grey-800 rounded-xl">
+          <h4 className="text-sm font-semibold text-grey-900 dark:text-grey-50 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-pink-accent" />
+            Score Breakdown
+          </h4>
+          
+          <div className="space-y-3">
+            {/* Identity Score */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-500" />
+                <span className="text-sm text-grey-700 dark:text-grey-300">Identity</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-2 bg-grey-200 dark:bg-grey-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-500 rounded-full transition-all duration-1000" 
+                    style={{ width: `${((breakdown?.identity || 0) / 25) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-mono font-semibold text-grey-900 dark:text-grey-50 w-8 text-right">
+                  {breakdown?.identity || 0}
+                </span>
+                <span className="text-xs text-grey-500 w-6">/25</span>
+              </div>
+            </div>
+
+            {/* Governance Score */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Vote className="w-4 h-4 text-purple-500" />
+                <span className="text-sm text-grey-700 dark:text-grey-300">Governance</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-2 bg-grey-200 dark:bg-grey-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-purple-500 rounded-full transition-all duration-1000" 
+                    style={{ width: `${((breakdown?.governance || 0) / 30) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-mono font-semibold text-grey-900 dark:text-grey-50 w-8 text-right">
+                  {breakdown?.governance || 0}
+                </span>
+                <span className="text-xs text-grey-500 w-6">/30</span>
+              </div>
+            </div>
+
+            {/* Economic/Staking Score */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-pink-accent" />
+                <span className="text-sm text-grey-700 dark:text-grey-300">Economic</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-2 bg-grey-200 dark:bg-grey-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-pink-accent rounded-full transition-all duration-1000" 
+                    style={{ width: `${((breakdown?.staking || breakdown?.economic || 0) / 25) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-mono font-semibold text-grey-900 dark:text-grey-50 w-8 text-right">
+                  {breakdown?.staking || breakdown?.economic || 0}
+                </span>
+                <span className="text-xs text-grey-500 w-6">/25</span>
+              </div>
+            </div>
+
+            {/* Activity Score */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-orange-500" />
+                <span className="text-sm text-grey-700 dark:text-grey-300">Activity</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-2 bg-grey-200 dark:bg-grey-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-orange-500 rounded-full transition-all duration-1000" 
+                    style={{ width: `${((breakdown?.activity || 0) / 20) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-mono font-semibold text-grey-900 dark:text-grey-50 w-8 text-right">
+                  {breakdown?.activity || 0}
+                </span>
+                <span className="text-xs text-grey-500 w-6">/20</span>
+              </div>
+            </div>
+
+            {/* Behavioral Score (nếu có) */}
+            {behavioralScore > 0 && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-teal-500" />
+                  <span className="text-sm text-grey-700 dark:text-grey-300">Behavioral</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 h-2 bg-grey-200 dark:bg-grey-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-teal-500 rounded-full transition-all duration-1000" 
+                      style={{ width: `${(behavioralScore / 20) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-mono font-semibold text-grey-900 dark:text-grey-50 w-8 text-right">
+                    {behavioralScore}
+                  </span>
+                  <span className="text-xs text-grey-500 w-6">/20</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tổng điểm */}
+          <div className="mt-4 pt-3 border-t border-grey-200 dark:border-grey-800">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-grey-900 dark:text-grey-50">Total Score</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold font-mono text-grey-900 dark:text-grey-50">{score}</span>
+                <span className="text-sm text-grey-500">/100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* HIỂN THỊ SYBIL RISK NẾU CÓ */}
+        {sybilRisk && sybilRisk.score > 0.3 && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-500 rounded-xl flex flex-col gap-2">
             <h4 className="text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
@@ -298,35 +422,35 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
                 )}
               </div>
             )}
+          </div>
+        )}
 
-            {/* NÚT MINT */}
-            {score >= 5 && (
-              <div className="mt-3 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl">
-                <div className="flex items-start gap-3 mb-3">
-                  <Sparkles className="w-5 h-5 text-purple-400 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-purple-300 mb-1">
-                      Bạn đủ điều kiện nhận Soulbound Badge!
-                    </h4>
-                    <p className="text-xs text-grey-400">
-                      Mint NFT badge {getTierFromScore(score).name} để chứng minh reputation của bạn on-chain
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleMint}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/50"
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-5 h-5" />
-                  )}
-                  {loading ? 'Minting...' : `Mint ${getTierFromScore(score).name} Badge`}
-                </button>
+        {/* NÚT MINT - DI CHUYỂN RA NGOÀI */}
+        {score >= 5 && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl">
+            <div className="flex items-start gap-3 mb-3">
+              <Sparkles className="w-5 h-5 text-purple-400 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-purple-300 mb-1">
+                  Bạn đủ điều kiện nhận Soulbound Badge!
+                </h4>
+                <p className="text-xs text-grey-400">
+                  Mint NFT badge {getTierFromScore(score).name} để chứng minh reputation của bạn on-chain
+                </p>
               </div>
-            )}
+            </div>
+            <button
+              onClick={handleMint}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/50"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Sparkles className="w-5 h-5" />
+              )}
+              {loading ? 'Minting...' : `Mint ${getTierFromScore(score).name} Badge`}
+            </button>
           </div>
         )}
 

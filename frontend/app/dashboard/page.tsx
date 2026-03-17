@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { ChatMessage } from "@/types";
 import { useAccount } from "wagmi";
-import { getReputationScore } from "@/services/reputationService";
 
 const SUGGESTIONS = [
     {
@@ -132,6 +131,7 @@ export default function Dashboard() {
             role: "user",
             text: text,
             timestamp: new Date(),
+            isReputationQuery, // Thêm flag để đánh dấu
         };
 
         setMessages((prev) => [...prev, userMessage]);
@@ -146,52 +146,41 @@ export default function Dashboard() {
                 throw new Error("Please connect your wallet or enter a test address");
             }
 
-            if (isReputationQuery && addressToUse) {
-                const scoreData = await getReputationScore(addressToUse);
-                const botMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: "model",
-                    text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
-                    data: { score: scoreData },
-                    timestamp: new Date(),
-                };
-                setMessages((prev) => [...prev, botMessage]);
-            } else {
-                // GỌI API BACKEND VÀ TRUYỀN SESSION ID
-                const response = await fetch(`${API_URL}/api/chat`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        address: addressToUse,
-                        query: text,
-                        sessionId: currentSessionId // Thêm sessionId vào payload
-                    }),
-                });
+            // TẤT CẢ ĐỀU GỌI QUA CHAT API ĐỂ LƯU LỊCH SỬ
+            const response = await fetch(`/api/chat`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    address: addressToUse,
+                    query: text,
+                    sessionId: currentSessionId,
+                }),
+            });
 
-                if (!response.ok) {
-                    throw new Error("Failed to get response from backend");
-                }
-
-                const data = await response.json();
-
-                // Cập nhật lại session id nếu đây là tin nhắn đầu tiên của session mới
-                if (data.sessionId && !currentSessionId) {
-                    setCurrentSessionId(data.sessionId);
-                    fetchSessions(addressToUse); // Load lại danh sách sidebar
-                }
-
-                const botMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    role: "model",
-                    text: data.response,
-                    data: data.onChainData, 
-                    timestamp: new Date(),
-                };
-
-                setMessages((prev) => [...prev, botMessage]);
+            if (!response.ok) {
+                throw new Error("Failed to get response from backend");
             }
+
+            const data = await response.json();
+
+            // Cập nhật sessionId nếu có session mới được tạo
+            if (data.sessionId && !currentSessionId) {
+                setCurrentSessionId(data.sessionId);
+                fetchSessions(addressToUse); // Load lại danh sách sidebar
+            }
+
+            const botMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: "model",
+                text: data.response,
+                data: data.onChainData,
+                timestamp: new Date(),
+            };
+
+            console.log('Chat response data:', data.onChainData); // Debug log
+            setMessages((prev) => [...prev, botMessage]);
         } catch (error) {
             console.error(error);
             const errorMessage: ChatMessage = {
@@ -218,7 +207,7 @@ export default function Dashboard() {
     const handleSuggestionClick = async (suggestion: (typeof SUGGESTIONS)[0]) => {
         setShowReputationScore(false);
         const isReputation = suggestion.action === "calculate-reputation";
-        await handleSendMessage(suggestion.query, isReputation);
+        await handleSendMessage(suggestion.query, isReputation); // Truyền flag
     };
 
     return (

@@ -385,7 +385,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             variants={item}
                             className="text-xl text-grey-600 dark:text-grey-400 max-w-2xl mb-12 leading-relaxed font-light"
                         >
-                            DotRepute is a{" "}
+                            ContrAI is a{" "}
                             <span className="font-medium text-grey-900 dark:text-white">
                                 Rust-powered Contributor Reputation System
                             </span>{" "}
