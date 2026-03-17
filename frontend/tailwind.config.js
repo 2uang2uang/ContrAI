@@ -11,6 +11,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-dm-serif)', 'serif'],
         display: ['var(--font-dm-serif)', 'serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
@@ -30,6 +31,9 @@ module.exports = {
         },
         pink: {
           accent: '#FF2867',
+        },
+        brand: {
+          pink: '#FF2867',
         },
         polkadot: {
           pink: '#E6007A',

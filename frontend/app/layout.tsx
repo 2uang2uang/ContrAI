@@ -19,8 +19,11 @@ const dmSerifDisplay = DM_Serif_Display({
 })
 
 export const metadata: Metadata = {
-  title: 'ContrAI - Polkadot Reputation System',
+  title: 'ContrAI',
   description: 'Build transparent reputation systems on Polkadot',
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 export default function RootLayout({

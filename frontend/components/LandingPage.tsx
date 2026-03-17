@@ -43,7 +43,7 @@ const RotatingGlobe = ({ isDarkMode }: { isDarkMode: boolean }) => {
         // Light Mode: Grey-300 (#D6D3D1) for inactive
         // Dark Mode: Grey-600 (#57534E) for inactive
         const dotColor = isDarkMode ? "#57534E" : "#D6D3D1";
-        const activeDotColor = "#FF2867"; // Brand Pink
+        const activeDotColor = "#FF2867"; // Pink Accent
 
         // Modernize: Make it larger and position at bottom to create a "Horizon" effect
         const GLOBE_RADIUS = width > 800 ? 550 : 300;
@@ -182,7 +182,7 @@ const LandingNavbar = ({
             <a href="#" className="flex items-center gap-3">
                 <div className="relative group cursor-pointer">
                     <Hexagon
-                        className="w-9 h-9 text-brand-pink fill-brand-pink/10 group-hover:fill-brand-pink/30 transition-all duration-500"
+                        className="w-9 h-9 text-pink-accent fill-pink-accent/10 group-hover:fill-pink-accent/30 transition-all duration-500"
                         strokeWidth={1.5}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -191,29 +191,30 @@ const LandingNavbar = ({
                         </span>
                     </div>
                 </div>
-
-                <span className="font-serif text-2xl tracking-tight text-grey-900 dark:text-white">
-                    <span className="text-brand-pink">ContrAI</span>
+                <span className="font-serif text-2xl tracking-tight ">
+                    <span className="text-white-accent">Contr</span>
+                    <span className="text-pink-accent">AI</span>
                 </span>
+                
             </a>
 
             <div className="flex items-center gap-6 md:gap-8">
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium text-grey-500 dark:text-grey-400">
                     <a
                         href="#"
-                        className="hover:text-brand-pink transition-colors"
+                        className="hover:text-pink-accent transition-colors"
                     >
                         Docs
                     </a>
                     <a
                         href="#"
-                        className="hover:text-brand-pink transition-colors"
+                        className="hover:text-pink-accent transition-colors"
                     >
                         Governance
                     </a>
                     <a
                         href="/leaderboard"
-                        className="hover:text-brand-pink transition-colors"
+                        className="hover:text-pink-accent transition-colors"
                     >
                         Leaderboard
                     </a>
@@ -267,12 +268,12 @@ const FeatureCard = ({
         whileHover={{ y: -5 }}
         className="group relative p-8 rounded-3xl bg-white dark:bg-grey-900/40 border border-grey-200 dark:border-grey-800 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
     >
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-pink/0 to-orange-500/0 group-hover:from-brand-pink/5 group-hover:to-orange-500/5 transition-all duration-500" />
-        <div className="absolute inset-0 border border-transparent group-hover:border-brand-pink/20 rounded-3xl transition-colors duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-accent/0 to-polkadot-orange/0 group-hover:from-pink-accent/5 group-hover:to-polkadot-orange/5 transition-all duration-500" />
+        <div className="absolute inset-0 border border-transparent group-hover:border-pink-accent/20 rounded-3xl transition-colors duration-500" />
 
         <div className="relative z-10">
-            <div className="w-12 h-12 bg-grey-50 dark:bg-grey-950 border border-grey-200 dark:border-grey-800 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-brand-pink/50 transition-all duration-500 shadow-sm">
-                <Icon className="w-6 h-6 text-grey-900 dark:text-white group-hover:text-brand-pink transition-colors" />
+            <div className="w-12 h-12 bg-grey-50 dark:bg-grey-950 border border-grey-200 dark:border-grey-800 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-pink-accent/50 transition-all duration-500 shadow-sm">
+                <Icon className="w-6 h-6 text-grey-900 dark:text-white group-hover:text-pink-accent transition-colors" />
             </div>
             <h3 className="text-2xl font-serif mb-3 text-grey-900 dark:text-white">
                 {title}
@@ -294,7 +295,7 @@ const StatItem = ({ label, value }: { label: string; value: string }) => (
         >
             {value}
         </motion.span>
-        <span className="text-[10px] text-brand-pink font-bold uppercase tracking-widest">
+        <span className="text-[10px] text-pink-accent font-bold uppercase tracking-widest">
             {label}
         </span>
     </div>
@@ -330,7 +331,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
     return (
-        <div className="min-h-screen bg-grey-50 dark:bg-grey-950 text-grey-900 dark:text-white selection:bg-brand-pink/30 font-sans overflow-x-hidden transition-colors duration-300">
+        <div className="min-h-screen bg-grey-50 dark:bg-grey-950 text-grey-900 dark:text-white selection:bg-pink-accent/30 font-sans overflow-x-hidden transition-colors duration-300">
             <LandingNavbar
                 onLaunch={onLaunch}
                 isDarkMode={isDarkMode}
@@ -357,11 +358,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                         <motion.div
                             variants={item}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-white/5 backdrop-blur-sm text-xs font-medium mb-8 hover:border-brand-pink/50 transition-colors cursor-default"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-white/5 backdrop-blur-sm text-xs font-medium mb-8 hover:border-pink-accent/50 transition-colors cursor-default"
                         >
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-pink opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-pink"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-accent opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-accent"></span>
                             </span>
                             <span className="text-grey-600 dark:text-grey-300 uppercase tracking-wider">
                                 Polkadot / Ver-2.0
@@ -377,7 +378,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                 reputation systems,
                             </span>{" "}
                             <br />
-                            <span className="text-brand-pink">your way.</span>
+                            <span className="text-pink-accent">your way.</span>
                         </motion.h1>
 
                         <motion.p
@@ -419,8 +420,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </section>
 
             {/* STATS TICKER */}
-            <div className="border-y border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-black/80 backdrop-blur-md relative overflow-hidden transition-colors duration-300 z-20">
-                <div className="absolute inset-0 bg-brand-pink/5 blur-3xl opacity-50" />
+            <div className="border-y border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-grey-950/80 backdrop-blur-md relative overflow-hidden transition-colors duration-300 z-20">
+                <div className="absolute inset-0 bg-pink-accent/5 blur-3xl opacity-50" />
                 <div className="container mx-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-grey-200 dark:divide-grey-800 relative z-10">
                         <StatItem label="Active Identities" value="12.4K" />
@@ -442,7 +443,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         >
                             <h2 className="font-serif text-5xl md:text-6xl mb-4 text-grey-900 dark:text-white">
                                 The Reputation <br />
-                                <span className="text-brand-pink italic">
+                                <span className="text-pink-accent italic">
                                     Machine
                                 </span>
                             </h2>
@@ -482,10 +483,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                 className="relative p-1 rounded-2xl"
                             >
                                 <div className="bg-white dark:bg-grey-900 h-full rounded-xl p-8 border border-grey-200 dark:border-grey-800 relative overflow-hidden group shadow-sm dark:shadow-none hover:shadow-md transition-all duration-300">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-6xl text-grey-900 dark:text-white group-hover:text-brand-pink transition-colors">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-6xl text-grey-900 dark:text-white group-hover:text-pink-accent transition-colors">
                                         0{i + 1}
                                     </div>
-                                    <div className="w-12 h-12 rounded-full bg-grey-50 dark:bg-grey-800 flex items-center justify-center mb-6 border border-grey-200 dark:border-grey-700 group-hover:border-brand-pink transition-colors">
+                                    <div className="w-12 h-12 rounded-full bg-grey-50 dark:bg-grey-800 flex items-center justify-center mb-6 border border-grey-200 dark:border-grey-700 group-hover:border-pink-accent transition-colors">
                                         <item.icon className="w-5 h-5 text-grey-900 dark:text-white" />
                                     </div>
                                     <h3 className="text-2xl font-serif mb-4 text-grey-900 dark:text-white">
@@ -503,7 +504,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* FEATURE GRID */}
             <section className="py-32 bg-grey-100 dark:bg-grey-900/30 relative overflow-hidden transition-colors duration-300">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-pink to-transparent opacity-50" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-pink-accent to-transparent opacity-50" />
 
                 <div className="container mx-auto px-6 lg:px-12 relative z-10">
                     <div className="text-center mb-20">
@@ -514,7 +515,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             className="font-serif text-4xl md:text-6xl mb-6 text-grey-900 dark:text-white"
                         >
                             Intelligence for{" "}
-                            <span className="text-brand-pink italic">DAOs</span>
+                            <span className="text-pink-accent italic">DAOs</span>
                         </motion.h2>
                     </div>
 
