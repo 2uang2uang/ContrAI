@@ -3,6 +3,7 @@ import { getOnChainData } from '../services/subscan.service';
 import { calculateReputationWithAI } from '../services/ai.service';
 import { generateMintSignature } from '../services/blockchain.service';
 import { supabase } from '../services/db.service';
+import { logger } from '../utils/logger';
 
 
 const router = express.Router();
@@ -11,9 +12,8 @@ const router = express.Router();
  * @swagger
  * /api/reputation/calculate:
  *   post:
- *     tags: [Reputation]
  *     summary: Calculate reputation score for a wallet address
- *     description: Analyzes on-chain data and calculates AI-powered reputation score
+ *     tags: [Reputation]
  *     requestBody:
  *       required: true
  *       content:
@@ -26,7 +26,6 @@ const router = express.Router();
  *               address:
  *                 type: string
  *                 description: Polkadot wallet address
- *                 example: "1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg"
  *     responses:
  *       200:
  *         description: Reputation score calculated successfully
@@ -46,7 +45,7 @@ const router = express.Router();
  *                 timestamp:
  *                   type: string
  *       400:
- *         description: Bad request - missing address
+ *         description: Bad request
  *         content:
  *           application/json:
  *             schema:
@@ -60,12 +59,8 @@ router.post('/calculate', async (req, res, next) => {
       return res.status(400).json({ error: 'Wallet address is required' });
     }
 
-    console.log(`📝 Calculating reputation for ${address}`);
-
-    // Get on-chain data
     const onChainData = await getOnChainData(address);
 
-    // Calculate score with AI
     const score = await calculateReputationWithAI(address, onChainData);
 
     res.json({
@@ -84,16 +79,15 @@ router.post('/calculate', async (req, res, next) => {
  * @swagger
  * /api/reputation/leaderboard:
  *   get:
- *     tags: [Reputation]
  *     summary: Get reputation leaderboard
- *     description: Returns top wallets ranked by reputation score
+ *     tags: [Reputation]
  *     parameters:
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Number of entries to return
+ *         description: Number of top addresses to return
  *     responses:
  *       200:
  *         description: Leaderboard retrieved successfully
@@ -129,7 +123,6 @@ router.post('/calculate', async (req, res, next) => {
 router.get('/leaderboard', async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    // Get leaderboard data from database
     const { data, error } = await supabase
       .from('reputation_scores')
       .select('address, total_score, rank, level, identity_score, governance_score, economic_score, behavioral_score, last_updated')
@@ -137,15 +130,13 @@ router.get('/leaderboard', async (req, res, next) => {
       .limit(limit);
 
     if (error) {
-      console.error('Error fetching leaderboard:', error);
+      logger.error({ err: error }, 'Failed to fetch leaderboard');
       throw error;
     }
 
-    // Transform data to LeaderboardEntry format
     const leaderboard = (data || []).map((entry, index) => {
       const badges: string[] = [];
       
-      // Assign badges based on scores
       if (entry.governance_score > 80) badges.push('Governance Whale');
       if (entry.identity_score > 90) badges.push('Verified Identity');
       if (entry.economic_score > 80) badges.push('Economic Contributor');
@@ -158,7 +149,7 @@ router.get('/leaderboard', async (req, res, next) => {
         rank: entry.rank,
         level: entry.level,
         badges,
-        trend: 'neutral' as const, // Default, có thể tính từ history
+        trend: 'neutral' as const,
         position: index + 1,
       };
     });
@@ -177,9 +168,8 @@ router.get('/leaderboard', async (req, res, next) => {
  * @swagger
  * /api/reputation/{address}:
  *   get:
+ *     summary: Get on-chain data for a specific address
  *     tags: [Reputation]
- *     summary: Get on-chain data for a wallet address
- *     description: Retrieves raw on-chain data without AI analysis
  *     parameters:
  *       - in: path
  *         name: address
@@ -187,7 +177,6 @@ router.get('/leaderboard', async (req, res, next) => {
  *         schema:
  *           type: string
  *         description: Polkadot wallet address
- *         example: "1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg"
  *     responses:
  *       200:
  *         description: On-chain data retrieved successfully
@@ -209,8 +198,6 @@ router.get('/:address', async (req, res, next) => {
   try {
     const { address } = req.params;
 
-    console.log(`📊 Getting on-chain data for ${address}`);
-
     const onChainData = await getOnChainData(address);
 
     res.json({
@@ -228,9 +215,8 @@ router.get('/:address', async (req, res, next) => {
  * @swagger
  * /api/reputation/request-mint:
  *   post:
+ *     summary: Request mint signature for reputation badge
  *     tags: [Reputation]
- *     summary: Request mint signature for reputation NFT
- *     description: Generates a signature for minting reputation badge NFT
  *     requestBody:
  *       required: true
  *       content:
@@ -243,7 +229,7 @@ router.get('/:address', async (req, res, next) => {
  *             properties:
  *               address:
  *                 type: string
- *                 description: Wallet address
+ *                 description: Polkadot wallet address
  *               score:
  *                 type: number
  *                 minimum: 0
@@ -257,7 +243,7 @@ router.get('/:address', async (req, res, next) => {
  *                 description: Block number for snapshot
  *     responses:
  *       200:
- *         description: Signature generated successfully
+ *         description: Mint signature generated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -266,9 +252,9 @@ router.get('/:address', async (req, res, next) => {
  *                 success:
  *                   type: boolean
  *                 signature:
- *                   type: object
+ *                   type: string
  *       400:
- *         description: Invalid input parameters
+ *         description: Bad request
  *         content:
  *           application/json:
  *             schema:
@@ -287,8 +273,6 @@ router.post('/request-mint', async (req, res, next) => {
       return res.status(400).json({ error: 'Address is required' });
     }
 
-    // Gọi hàm ký EVM (blockchain.service.ts) với snapshotBlock
-    // Bạn có thể truyền thêm currentBlock từ req.body nếu đã cập nhật frontend service
     const signature = await generateMintSignature(address, score, req.body.snapshotBlock || 0);
     
     res.json({ success: true, signature });

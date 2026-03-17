@@ -1,19 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
 import { OnChainData } from './subscan.service';
 import { dbService } from './db.service';
-
-// Debug: Check if API key is loaded
-if (!process.env.GEMINI_API_KEY) {
-  console.error('❌ GEMINI_API_KEY is not set in environment variables!');
-} else {
-  console.log('✅ GEMINI_API_KEY loaded:', process.env.GEMINI_API_KEY.substring(0, 10) + '...');
-}
+import { logger } from '../utils/logger';
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || '',
 });
 
-// Simple in-memory cache for AI responses (5 minutes TTL)
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -21,7 +14,7 @@ interface CacheEntry<T> {
 
 const reputationCache = new Map<string, CacheEntry<ReputationScore>>();
 const chatCache = new Map<string, CacheEntry<string>>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
   const entry = cache.get(key);
@@ -33,7 +26,6 @@ function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null 
     return null;
   }
 
-  console.log(`✅ Cache hit for ${key} (age: ${Math.floor(age / 1000)}s)`);
   return entry.data;
 }
 
@@ -48,10 +40,10 @@ export interface ReputationScore {
     governance: number;
     staking: number;
     activity: number;
-    behavioral: number; // Điểm chất lượng hành vi (MỚI)
+    behavioral: number;
   };
-  sybilRisk: {          // Đánh giá rủi ro clone/spam (MỚI)
-    score: number;      // 0.0 đến 1.0 (ví dụ: 0.8 là rủi ro cao)
+  sybilRisk: {
+    score: number;
     flaggedPatterns: string[];
   };
   rank: string;
@@ -69,8 +61,6 @@ export async function calculateReputationWithAI(
   if (cached) {
     return cached;
   }
-
-  console.log(`🤖 AI analyzing reputation for ${address}`);
 
   const recentTransfersSummary = onChainData.recentTransfers?.map((t: any) =>
     `[${new Date(t.block_timestamp * 1000).toISOString()}] ${t.from === address ? 'Gửi' : 'Nhận'} ${t.amount} ${t.asset_symbol} ${t.from === address ? 'tới' : 'từ'} ${t.to === address ? t.from : t.to}`
@@ -113,13 +103,11 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
   "insights": "<Góc nhìn sâu sắc của AI về hành vi trên on-chain của ví này>"
 }`;
 
-  // Retry logic for handling 503 errors - OPTIMIZED
   const maxRetries = 2;
   const retryDelays = [1000, 2000];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('AI request timeout')), 60000)
       );
@@ -141,17 +129,12 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
 
       const aiScore = JSON.parse(text);
 
-      // 1. Lưu vào cache tạm thời (RAM)
       setCache(reputationCache, address, aiScore);
 
-      // 2. LƯU VÀO DATABASE (Supabase)
       try {
         await dbService.upsertReputationScore(address, aiScore);
-        console.log(`✅ Đã lưu điểm uy tín của ${address} vào Database thành công`);
       } catch (dbError) {
-        // Ta dùng try/catch bọc ở đây để nếu DB có lỗi (ví dụ rớt mạng), 
-        // nó chỉ log ra lỗi chứ không làm chết API (Frontend vẫn nhận được điểm)
-        console.error(`❌ Lỗi khi lưu điểm vào Database cho ${address}:`, dbError);
+        logger.warn({ err: dbError, address }, 'Failed to persist reputation score');
       }
 
       return aiScore;
@@ -160,17 +143,14 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
       const is503Error = error.status === 503 || error.message?.includes('503') || error.message?.includes('UNAVAILABLE');
       const isTimeout = error.message?.includes('timeout');
 
-      // Retry on 503 or timeout (but not on last attempt)
       if ((is503Error || isTimeout) && !isLastAttempt) {
         const delay = retryDelays[attempt];
-        console.log(`⚠️ AI service ${isTimeout ? 'timeout' : 'unavailable (503)'}, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
-        // Giả sử bạn có hàm sleep
+        logger.warn({ attempt: attempt + 1, maxRetries, delay, isTimeout, is503Error }, 'AI request retry scheduled');
         await new Promise(res => setTimeout(res, delay));
         continue;
       }
 
-      // If it's the last attempt or not a retryable error, throw
-      console.error('❌ AI reputation calculation error:', error);
+      logger.error({ err: error, address }, 'AI reputation calculation failed');
       throw new Error(
         isTimeout
           ? 'AI service đang xử lý quá lâu. Vui lòng thử lại sau ít phút.'
@@ -184,31 +164,21 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
   throw new Error('Không thể tính toán reputation score');
 }
 
-/**
- * Sleep utility for retry delays
- */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Chat with AI about reputation/blockchain data with retry logic
- */
 export async function chatWithAI(
   query: string,
   address: string,
   onChainData: OnChainData
 ): Promise<string> {
-  // Check cache first (cache key includes query)
   const cacheKey = `${address}:${query}`;
   const cached = getCached(chatCache, cacheKey);
   if (cached) {
     return cached;
   }
 
-  console.log(`💬 AI chat for ${address}: ${query}`);
-
-  // Phân tích loại câu hỏi để tạo response phù hợp
   const queryLower = query.toLowerCase().trim();
   const isGreeting = /^(chào|hello|hi|xin chào|hey|chào bạn)$/i.test(queryLower);
   const isHelp = /^(help|giúp|hướng dẫn|làm gì|có thể làm gì)$/i.test(queryLower);
@@ -216,7 +186,6 @@ export async function chatWithAI(
   let prompt = '';
 
   if (isGreeting || isHelp) {
-    // PROMPT ĐẶC BIỆT CHO GREETING/HELP
     prompt = `Bạn là DotRepute AI - trợ lý thông minh chuyên phân tích uy tín trên Polkadot.
 
 User vừa ${isGreeting ? 'chào hỏi' : 'hỏi về hướng dẫn'}: "${query}"
@@ -243,7 +212,6 @@ ${onChainData.activity.transactionCount < 10 ? 'Tôi thấy bạn mới bắt đ
 
 Trả lời bằng tiếng Việt, thân thiện và cụ thể.`;
   } else {
-    // PROMPT THÔNG THƯỜNG CHO CÂU HỎI KHÁC
     prompt = `Bạn là DotRepute AI - trợ lý chuyên gia phân tích uy tín trên Polkadot. Trả lời dựa trên dữ liệu THỰC TẾ.
 
 Câu hỏi: "${query}"
@@ -263,13 +231,11 @@ HƯỚNG DẪN TRẢ LỜI:
 - Nếu không hiểu câu hỏi, hỏi lại để làm rõ`;
   }
 
-  // Retry logic for handling 503 errors - OPTIMIZED
   const maxRetries = 2;
   const retryDelays = [1000, 2000];
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Add timeout to prevent hanging (60s for chat responses)
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('AI request timeout')), 60000)
       );
@@ -278,7 +244,7 @@ HƯỚNG DẪN TRẢ LỜI:
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-          temperature: isGreeting || isHelp ? 0.3 : 0.1, // Greeting linh hoạt hơn
+          temperature: isGreeting || isHelp ? 0.3 : 0.1,
           topP: 0.9,
           topK: 40,
         },
@@ -288,7 +254,6 @@ HƯỚNG DẪN TRẢ LỜI:
 
       const result = response.text || 'Xin lỗi, tôi không thể trả lời câu hỏi này.';
 
-      // Cache the result
       setCache(chatCache, cacheKey, result);
 
       return result;
@@ -297,16 +262,14 @@ HƯỚNG DẪN TRẢ LỜI:
       const is503Error = error.status === 503 || error.message?.includes('503') || error.message?.includes('UNAVAILABLE');
       const isTimeout = error.message?.includes('timeout');
 
-      // Retry on 503 or timeout (but not on last attempt)
       if ((is503Error || isTimeout) && !isLastAttempt) {
         const delay = retryDelays[attempt];
-        console.log(`⚠️ AI service ${isTimeout ? 'timeout' : 'unavailable (503)'}, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries})`);
+        logger.warn({ attempt: attempt + 1, maxRetries, delay, isTimeout, is503Error }, 'AI chat retry scheduled');
         await sleep(delay);
         continue;
       }
 
-      // If it's the last attempt or not a retryable error, throw
-      console.error('❌ AI chat error:', error);
+      logger.error({ err: error, address }, 'AI chat failed');
       throw new Error(
         isTimeout
           ? 'AI service đang xử lý quá lâu. Vui lòng thử câu hỏi ngắn gọn hơn.'

@@ -1,17 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 
-// Khởi tạo Supabase client với Service Role Key để có quyền thao tác dữ liệu
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export class DatabaseService {
-    /**
-     * Lưu hoặc cập nhật điểm số mới nhất của ví
-     */
     async upsertReputationScore(address: string, scoreData: any) {
-        // 1. Cập nhật bảng reputation_scores chính
         const { data, error } = await supabase
             .from('reputation_scores')
             .upsert({
@@ -26,36 +22,32 @@ export class DatabaseService {
                 sybil_risk: scoreData.sybilRisk?.score || 0,
                 last_updated: new Date().toISOString()
             }, {
-                onConflict: 'address' // Nếu ví đã tồn tại thì update, chưa có thì insert
+                onConflict: 'address'
             });
 
         if (error) {
-            console.error('Lỗi khi lưu vào Supabase (reputation_scores):', error);
+            logger.error({ err: error, address }, 'Failed to upsert reputation_scores');
             throw error;
         }
 
-        // 2. Lưu một bản ghi vào lịch sử (để sau này phân tích xu hướng)
         const { error: historyError } = await supabase
             .from('reputation_history')
             .upsert({
                 address: address,
-                snapshot_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+                snapshot_date: new Date().toISOString().split('T')[0],
                 total_score: scoreData.totalScore,
                 rank: scoreData.rank
             }, {
-                onConflict: 'address, snapshot_date' // Mỗi ngày chỉ lưu 1 bản ghi lịch sử
+                onConflict: 'address, snapshot_date'
             });
 
         if (historyError) {
-            console.error('Lỗi khi lưu vào Supabase (reputation_history):', historyError);
+            logger.warn({ err: historyError, address }, 'Failed to upsert reputation_history');
         }
 
         return data;
     }
 
-    /**
-     * Lấy điểm số hiện tại của một ví
-     */
     async getScoreByAddress(address: string) {
         const { data, error } = await supabase
             .from('reputation_scores')
@@ -63,8 +55,8 @@ export class DatabaseService {
             .eq('address', address)
             .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 là lỗi không tìm thấy (bình thường)
-            console.error('Lỗi khi query Supabase:', error);
+        if (error && error.code !== 'PGRST116') {
+            logger.warn({ err: error, address }, 'Failed to fetch reputation score');
         }
 
         return data;
@@ -100,7 +92,6 @@ export class DatabaseService {
 
         if (error) throw error;
 
-        // Cập nhật thời gian updated_at của session
         await supabase
             .from('chat_sessions')
             .update({ updated_at: new Date().toISOString() })

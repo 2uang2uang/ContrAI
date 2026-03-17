@@ -9,10 +9,8 @@ export async function generateMintSignature(
   const registryAddress = process.env.REPUTATION_REGISTRY_ADDRESS || "";
   const wallet = new ethers.Wallet(privKey);
 
-  // Kết nối với provider để lấy nonce từ contract
   const provider = new ethers.JsonRpcProvider("https://services.polkadothub-rpc.com/testnet");
 
-  // ABI để lấy nonce
   const registryAbi = [
     "function nonces(address) external view returns (uint256)"
   ];
@@ -20,11 +18,10 @@ export async function generateMintSignature(
   const registryContract = new ethers.Contract(registryAddress, registryAbi, provider);
   const nonce = await registryContract.nonces(userAddress);
 
-  // Cấu hình Domain chuẩn EIP-712 khớp với Registry
   const domain = {
     name: "PolkadotReputationRegistry",
     version: "1",
-    chainId: 420420417, // Sửa chainId cho khớp với hardhat config
+    chainId: 420420417,
     verifyingContract: registryAddress
   };
 
@@ -43,7 +40,7 @@ export async function generateMintSignature(
 
   const value = {
     wallet: userAddress,
-    compositePct: Math.floor(compositePct), // Đảm bảo là số nguyên [cite: 107]
+    compositePct: Math.floor(compositePct),
     governancePct: 0,
     economicPct: 0,
     identityPct: 0,
