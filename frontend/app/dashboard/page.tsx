@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -13,36 +13,15 @@ import {
     Shield,
     LayoutDashboard,
 } from "lucide-react";
-import { ChatMessage, ChatSession } from "@/types";
+import { ChatMessage } from "@/types";
 import { useAccount } from "wagmi";
 import { getReputationScore } from "@/services/reputationService";
-
-const MOCK_SESSIONS: ChatSession[] = [
-    {
-        id: "1",
-        title: "Governance Analysis",
-        timestamp: new Date(),
-        preview: "Vote #192 participation details...",
-    },
-    {
-        id: "2",
-        title: "Staking Rewards",
-        timestamp: new Date(),
-        preview: "Validator performance check...",
-    },
-    {
-        id: "3",
-        title: "Identity Verification",
-        timestamp: new Date(),
-        preview: "On-chain registrar status...",
-    },
-];
 
 const SUGGESTIONS = [
     {
         label: "My Reputation",
         icon: Shield,
-        query: "Show my reputation status and score", // Đảm bảo chứa từ khóa "reputation" và "score"
+        query: "Show my reputation status and score",
         action: "calculate-reputation",
     },
     {
@@ -74,7 +53,12 @@ export default function Dashboard() {
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [showReputationScore, setShowReputationScore] = useState(false);
     const [testAddress, setTestAddress] = useState("");
+    
+    // Các state quản lý lịch sử chat
+    const [sessions, setSessions] = useState<any[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
+    // Xử lý Dark mode
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add("dark");
@@ -85,111 +69,160 @@ export default function Dashboard() {
 
     const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-    const handleSendMessage = async (
-            text: string,
-            isReputationQuery = false,
-        ) => {
-            if (!text.trim() || isLoading) return;
+    // Fetch danh sách sessions
+    const fetchSessions = useCallback(async (walletAddress: string) => {
+        try {
+            const response = await fetch(`/api/user-sessions/${walletAddress}`);
+            if (response.ok) {
+                const sessionsData = await response.json();
+                const formattedSessions = sessionsData.map((s: any) => ({
+                    id: s.id,
+                    title: s.title,
+                    timestamp: new Date(s.updated_at),
+                    preview: ""
+                }));
+                setSessions(formattedSessions);
+            }
+        } catch (error) {
+            console.error('Failed to load sessions:', error);
+        }
+    }, []);
 
-            const userMessage: ChatMessage = {
-                id: Date.now().toString(),
-                role: "user",
-                text: text,
-                timestamp: new Date(),
-            };
+    // Load sessions khi có address
+    useEffect(() => {
+        const addressToUse = testAddress.trim() || address;
+        if (addressToUse) {
+            fetchSessions(addressToUse);
+        }
+    }, [address, testAddress, fetchSessions]);
 
-            setMessages((prev) => [...prev, userMessage]);
-            setInput("");
-            setIsLoading(true);
+    // Load messages của một session cụ thể
+    const loadSessionMessages = async (sessionId: string) => {
+        setCurrentSessionId(sessionId);
+        setIsLoading(true);
+        setMessages([]);
+        
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+            const response = await fetch(`/api/chat/messages/${sessionId}`);
+            if (response.ok) {
+                const dbMessages = await response.json();
+                const formattedMessages = dbMessages.map((m: any) => ({
+                    id: m.id,
+                    role: m.role,
+                    text: m.content,
+                    data: m.metadata && Object.keys(m.metadata).length > 0 ? m.metadata : undefined,
+                    timestamp: new Date(m.created_at)
+                }));
+                setMessages(formattedMessages);
+            }
+        } catch (error) {
+            console.error('Failed to load session messages:', error);
+        } finally {
+            setIsLoading(false);
+            setSidebarOpen(false); // Đóng sidebar trên mobile sau khi chọn
+        }
+    };
 
-            try {
-                const API_URL =
-                    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const handleSendMessage = async (text: string, isReputationQuery = false) => {
+        if (!text.trim() || isLoading) return;
 
-                // Sử dụng testAddress nếu có, nếu không thì dùng address
-                const addressToUse = testAddress.trim() || address;
+        const userMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: "user",
+            text: text,
+            timestamp: new Date(),
+        };
 
-                if (!addressToUse) {
-                    throw new Error(
-                        "Please connect your wallet or enter a test address",
-                    );
-                }
+        setMessages((prev) => [...prev, userMessage]);
+        setInput("");
+        setIsLoading(true);
 
-                if (isReputationQuery && addressToUse) {
-                    // SỬ DỤNG SERVICE THAY VÌ GỌI TRỰC TIẾP
-                    const scoreData = await getReputationScore(addressToUse);
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+            const addressToUse = testAddress.trim() || address;
 
-                    const botMessage: ChatMessage = {
-                        id: (Date.now() + 1).toString(),
-                        role: "model",
-                        text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
-                        data: { score: scoreData },
-                        timestamp: new Date(),
-                    };
+            if (!addressToUse) {
+                throw new Error("Please connect your wallet or enter a test address");
+            }
 
-                    setMessages((prev) => [...prev, botMessage]);
-                } else {
-                    // CHAT BÌNH THƯỜNG: Vẫn gọi API Chat
-                    const response = await fetch(`${API_URL}/api/chat`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            address: addressToUse,
-                            query: text,
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        throw new Error("Failed to get response from backend");
-                    }
-
-                    const data = await response.json();
-
-                    const botMessage: ChatMessage = {
-                        id: (Date.now() + 1).toString(),
-                        role: "model",
-                        text: data.response,
-                        data: data.onChainData, 
-                        timestamp: new Date(),
-                    };
-
-                    setMessages((prev) => [...prev, botMessage]);
-                }
-            } catch (error) {
-                console.error(error);
-                const errorMessage: ChatMessage = {
+            if (isReputationQuery && addressToUse) {
+                const scoreData = await getReputationScore(addressToUse);
+                const botMessage: ChatMessage = {
                     id: (Date.now() + 1).toString(),
                     role: "model",
-                    text:
-                        error instanceof Error
-                            ? error.message
-                            : "I'm having trouble connecting to the network. Please try again later.",
+                    text: "Dưới đây là bảng phân tích Uy tín On-chain (Reputation) chi tiết của bạn được tổng hợp bởi AI:",
+                    data: { score: scoreData },
                     timestamp: new Date(),
                 };
-                setMessages((prev) => [...prev, errorMessage]);
-            } finally {
-                setIsLoading(false);
+                setMessages((prev) => [...prev, botMessage]);
+            } else {
+                // GỌI API BACKEND VÀ TRUYỀN SESSION ID
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        address: addressToUse,
+                        query: text,
+                        sessionId: currentSessionId // Thêm sessionId vào payload
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to get response from backend");
+                }
+
+                const data = await response.json();
+
+                // Cập nhật lại session id nếu đây là tin nhắn đầu tiên của session mới
+                if (data.sessionId && !currentSessionId) {
+                    setCurrentSessionId(data.sessionId);
+                    fetchSessions(addressToUse); // Load lại danh sách sidebar
+                }
+
+                const botMessage: ChatMessage = {
+                    id: (Date.now() + 1).toString(),
+                    role: "model",
+                    text: data.response,
+                    data: data.onChainData, 
+                    timestamp: new Date(),
+                };
+
+                setMessages((prev) => [...prev, botMessage]);
             }
-        };
+        } catch (error) {
+            console.error(error);
+            const errorMessage: ChatMessage = {
+                id: (Date.now() + 1).toString(),
+                role: "model",
+                text: error instanceof Error
+                        ? error.message
+                        : "I'm having trouble connecting to the network. Please try again later.",
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleNewChat = () => {
         setMessages([]);
+        setCurrentSessionId(null); // Xóa session id khi bắt đầu chat mới
         setShowReputationScore(false);
         setSidebarOpen(false);
     };
 
-    const handleSuggestionClick = async (
-        suggestion: (typeof SUGGESTIONS)[0],
-    ) => {
+    const handleSuggestionClick = async (suggestion: (typeof SUGGESTIONS)[0]) => {
         setShowReputationScore(false);
         const isReputation = suggestion.action === "calculate-reputation";
         await handleSendMessage(suggestion.query, isReputation);
     };
 
     return (
-        <div className="min-h-screen bg-grey-50 dark:bg-grey-950 text-grey-900 dark:text-grey-50 font-sans flex flex-col overflow-hidden transition-colors duration-300">
+        <div className="min-h-screen bg-grey-50 dark:bg-grey-950 text-grey-900 dark:text-grey-50 font-sans flex flex-col overflow-hidden transition-colors duration-300 pt-16">
             <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
 
             <div className="flex flex-1 relative overflow-hidden">
@@ -201,14 +234,15 @@ export default function Dashboard() {
                 )}
 
                 <Sidebar
-                    sessions={MOCK_SESSIONS}
+                    sessions={sessions}
                     isOpen={sidebarOpen}
                     onNewChat={handleNewChat}
                     toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                    onSelectSession={loadSessionMessages}
                 />
 
-                <main className="flex-1 flex flex-col relative w-full">
-                    <div className="flex items-center gap-3 px-6 py-4 border-b border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-grey-950/40 backdrop-blur-sm z-20">
+                <main className="flex-1 flex flex-col relative w-full lg:ml-72">
+                    <div className="flex items-center gap-3 px-6 py-4 border-b border-grey-200 dark:border-grey-800 bg-white/95 dark:bg-grey-950/95 backdrop-blur-sm z-20 sticky top-0">
                         <button
                             onClick={() => setSidebarOpen(true)}
                             className="lg:hidden p-2 -ml-2 text-grey-500 dark:text-grey-400 hover:text-grey-900 dark:hover:text-grey-50"
@@ -226,10 +260,11 @@ export default function Dashboard() {
                         </div>
                     </div>
 
+                    <div className="flex-1 overflow-y-auto pb-32">
                         <ChatInterface messages={messages} isLoading={isLoading} />
+                    </div>
                     
-
-                    <div className="p-4 sm:p-6 bg-grey-50 dark:bg-grey-950 border-t border-grey-200 dark:border-grey-800 z-20 transition-colors duration-300">
+                    <div className="fixed bottom-0 left-0 right-0 lg:left-72 p-4 sm:p-6 bg-grey-50/95 dark:bg-grey-950/95 backdrop-blur-md border-t border-grey-200 dark:border-grey-800 z-20 transition-colors duration-300">
                         <div className="max-w-4xl mx-auto space-y-4">
                             <div className="relative group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-accent to-orange-500 rounded-xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
@@ -237,25 +272,16 @@ export default function Dashboard() {
                                     <input
                                         type="text"
                                         value={input}
-                                        onChange={(e) =>
-                                            setInput(e.target.value)
-                                        }
-                                        onKeyDown={(e) =>
-                                            e.key === "Enter" &&
-                                            handleSendMessage(input)
-                                        }
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage(input)}
                                         placeholder="Ask about your on-chain reputation..."
                                         className="w-full bg-transparent text-grey-900 dark:text-grey-50 placeholder-grey-400 dark:placeholder-grey-500 px-4 py-4 focus:outline-none text-sm sm:text-base font-medium"
                                         disabled={isLoading}
                                     />
                                     <div className="pr-2">
                                         <button
-                                            onClick={() =>
-                                                handleSendMessage(input)
-                                            }
-                                            disabled={
-                                                !input.trim() || isLoading
-                                            }
+                                            onClick={() => handleSendMessage(input)}
+                                            disabled={!input.trim() || isLoading}
                                             className="p-2.5 rounded-lg bg-grey-900 dark:bg-grey-50 text-white dark:text-grey-900 hover:bg-grey-700 dark:hover:bg-grey-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                         >
                                             {isLoading ? (
@@ -272,9 +298,7 @@ export default function Dashboard() {
                                 {SUGGESTIONS.map((suggestion, idx) => (
                                     <button
                                         key={idx}
-                                        onClick={() =>
-                                            handleSuggestionClick(suggestion)
-                                        }
+                                        onClick={() => handleSuggestionClick(suggestion)}
                                         className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-grey-900 border border-grey-200 dark:border-grey-800 hover:border-pink-accent/50 hover:bg-grey-100 dark:hover:bg-grey-800 transition-all whitespace-nowrap group shadow-sm"
                                     >
                                         <suggestion.icon className="w-3.5 h-3.5 text-grey-400 dark:text-grey-500 group-hover:text-pink-accent transition-colors" />
@@ -287,8 +311,7 @@ export default function Dashboard() {
 
                             <div className="text-center">
                                 <p className="text-[10px] text-grey-400 dark:text-grey-500 font-mono">
-                                    Powered by Gemini 3 Flash • Polkadot
-                                    Ecosystem Data
+                                    Powered by Gemini 3 Flash • Polkadot Ecosystem Data
                                 </p>
                             </div>
                         </div>

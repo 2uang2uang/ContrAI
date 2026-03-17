@@ -69,6 +69,56 @@ export class DatabaseService {
 
         return data;
     }
+    async createChatSession(address: string, title: string) {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .insert({ user_address: address, title })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    }
+
+    async getChatSessions(address: string) {
+        const { data, error } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .eq('user_address', address)
+            .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    }
+
+    async saveChatMessage(sessionId: string, role: 'user' | 'model', content: string, metadata: any = {}) {
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .insert({ session_id: sessionId, role, content, metadata })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Cập nhật thời gian updated_at của session
+        await supabase
+            .from('chat_sessions')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', sessionId);
+
+        return data;
+    }
+
+    async getChatMessages(sessionId: string) {
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return data;
+    }
 }
 
 export const dbService = new DatabaseService();

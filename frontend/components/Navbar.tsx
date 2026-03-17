@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
   };
 
   return (
-    <nav className="h-16 border-b border-grey-200 dark:border-grey-800 bg-grey-50/80 dark:bg-grey-950/50 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-50 transition-colors duration-300">
+    <nav className="fixed top-0 left-0 right-0 h-16 border-b border-grey-200 dark:border-grey-800 bg-grey-50/95 dark:bg-grey-950/95 backdrop-blur-md flex items-center justify-between px-6 z-50 transition-colors duration-300">
       <div className="flex items-center gap-3">
         <a href="/" className="flex items-center gap-3">
     <div className="relative">

@@ -10,9 +10,17 @@ interface SidebarProps {
   isOpen: boolean;
   onNewChat: () => void;
   toggleSidebar: () => void;
+  onSelectSession?: (id: string) => void; // <-- Đã thêm chuẩn
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat }) => {
+// SỬA Ở ĐÂY: Khai báo thêm onSelectSession và toggleSidebar vào tham số
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  sessions, 
+  isOpen, 
+  onNewChat, 
+  toggleSidebar, 
+  onSelectSession 
+}) => {
   const { address } = useAccount();
   
   // Lấy 3 ký tự đầu và 4 ký tự cuối của địa chỉ
@@ -28,9 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat })
     <aside 
       className={`
         fixed left-0 top-16 bottom-0 z-40 bg-white dark:bg-grey-950 border-r border-grey-200 dark:border-grey-800 w-72 
-        transition-all duration-300 ease-in-out
+        transition-all duration-300 ease-in-out flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:w-72 flex flex-col
+        lg:translate-x-0
       `}
     >
       {/* User Profile Summary */}
@@ -64,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sessions, isOpen, onNewChat })
         <div className="px-2 pb-2 text-[10px] font-semibold text-grey-400 dark:text-grey-500 uppercase tracking-wider">Recent</div>
         {sessions.map((session) => (
           <button 
-            key={session.id}
+            key={session.id}onClick={() => onSelectSession && onSelectSession(session.id)}
             className="w-full text-left p-3 rounded-lg hover:bg-grey-100 dark:hover:bg-grey-900 group transition-colors flex items-start gap-3"
           >
             <MessageSquare className="w-4 h-4 text-grey-400 dark:text-grey-500 mt-0.5 group-hover:text-pink-accent transition-colors" />
