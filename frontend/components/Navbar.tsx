@@ -40,11 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isDarkMode, toggleTheme }) => {
       </div>
 
       <div className="flex items-center gap-6">
-        <div className="hidden md:flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Polkadot Mainnet
-          <span className="text-grey-500 dark:text-grey-400 ml-1">#18,293,102</span>
-        </div>
+        
 
         <div className="hidden md:flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

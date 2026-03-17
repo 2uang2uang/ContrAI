@@ -358,11 +358,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                         <motion.div
                             variants={item}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-white/5 backdrop-blur-sm text-xs font-medium mb-8 hover:border-pink-accent/50 transition-colors cursor-default"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-white/5 backdrop-blur-sm text-xs font-medium mb-8 hover:border-green-accent/50 transition-colors cursor-default"
                         >
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-accent opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-accent"></span>
+                                
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             </span>
                             <span className="text-grey-600 dark:text-grey-300 uppercase tracking-wider">
                                 Polkadot / Ver-2.0

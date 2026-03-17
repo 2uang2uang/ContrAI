@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { Trophy, TrendingUp, TrendingDown, Minus, Shield, Award, Hexagon, Loader2, RefreshCw } from 'lucide-react';
-import { getLeaderboard, LeaderboardEntry } from '@/lib/supabase';
+import { getLeaderboard, LeaderboardEntry } from '@/lib/api';
 
 const Leaderboard: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
