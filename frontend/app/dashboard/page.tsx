@@ -97,7 +97,7 @@ export default function Dashboard() {
         setMessages([]);
         
         try {
-            const response = await fetch(`${API_URL}/api/chat/messages/${sessionId}/messages`);
+            const response = await fetch(`${API_URL}/api/chat/sessions/${sessionId}/messages`);
             if (response.ok) {
                 const dbMessages = await response.json();
                 const formattedMessages = dbMessages.map((m: any) => ({
