@@ -11,9 +11,48 @@ import { logger } from './utils/logger';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Backend is running
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Service health status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 service:
+ *                   type: string
+ *                   example: DotRepute Backend API
+ */
 const PORT = process.env.PORT || 8080;
 
 app.use(cors({
