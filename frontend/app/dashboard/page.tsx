@@ -70,7 +70,7 @@ export default function Dashboard() {
 
     const fetchSessions = useCallback(async (walletAddress: string) => {
         try {
-            const response = await fetch(`${API_URL}/api/user-sessions/${walletAddress}`);
+            const response = await fetch(`${API_URL}/api/chat/sessions/${walletAddress}`);
             if (response.ok) {
                 const sessionsData = await response.json();
                 const formattedSessions = sessionsData.map((s: any) => ({
@@ -97,7 +97,7 @@ export default function Dashboard() {
         setMessages([]);
         
         try {
-            const response = await fetch(`${API_URL}/api/chat/messages/${sessionId}`);
+            const response = await fetch(`${API_URL}/api/chat/messages/${sessionId}/messages`);
             if (response.ok) {
                 const dbMessages = await response.json();
                 const formattedMessages = dbMessages.map((m: any) => ({
