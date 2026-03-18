@@ -109,10 +109,10 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
       );
 
       await tx.wait();
-      alert("🎉 Chúc mừng! Bạn đã xác thực điểm uy tín và Mint Badge thành công!");
+      alert("🎉 Congratulations! You have successfully verified your reputation score and minted your badge!");
 
     } catch (err: any) {
-      alert(`Lỗi: ${err.reason || err.message}`);
+      alert(`Error: ${err.reason || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -273,7 +273,7 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-500 rounded-xl flex flex-col gap-2">
             <h4 className="text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Cảnh báo Rủi ro Sybil ({(sybilRisk.score * 100).toFixed(0)}%)
+              Sybil Risk Warning ({(sybilRisk.score * 100).toFixed(0)}%)
             </h4>
             <ul className="list-disc ml-6 space-y-1 text-xs text-red-700 dark:text-red-400">
               {sybilRisk.flaggedPatterns?.map((pattern: string, idx: number) => (
@@ -376,7 +376,7 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
                 {scoreData?.strengths && scoreData.strengths.length > 0 && (
                   <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 rounded-xl">
                     <h4 className="text-sm font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
-                      ✨ Điểm mạnh
+                      ✨ Strengths
                     </h4>
                     <ul className="space-y-1">
                       {scoreData.strengths.map((strength: string, idx: number) => (
@@ -391,7 +391,7 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
                 {scoreData?.improvements && scoreData.improvements.length > 0 && (
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl">
                     <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                      🎯 Cần cải thiện
+                      🎯 Improvements Needed
                     </h4>
                     <ul className="space-y-1">
                       {scoreData.improvements.map((improvement: string, idx: number) => (
@@ -413,10 +413,10 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               <Sparkles className="w-5 h-5 text-purple-400 mt-0.5" />
               <div>
                 <h4 className="text-sm font-semibold text-purple-300 mb-1">
-                  Bạn đủ điều kiện nhận Soulbound Badge!
+                  You're eligible for a Soulbound Badge!
                 </h4>
                 <p className="text-xs text-grey-400">
-                  Mint NFT badge {getTierFromScore(score).name} để chứng minh reputation của bạn on-chain
+                  Mint a {getTierFromScore(score).name} NFT badge to prove your on-chain reputation
                 </p>
               </div>
             </div>

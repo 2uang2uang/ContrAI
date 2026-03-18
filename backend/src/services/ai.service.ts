@@ -63,44 +63,44 @@ export async function calculateReputationWithAI(
   }
 
   const recentTransfersSummary = onChainData.recentTransfers?.map((t: any) =>
-    `[${new Date(t.block_timestamp * 1000).toISOString()}] ${t.from === address ? 'Gửi' : 'Nhận'} ${t.amount} ${t.asset_symbol} ${t.from === address ? 'tới' : 'từ'} ${t.to === address ? t.from : t.to}`
-  ).join('\n') || 'Không có giao dịch gần đây';
+    `[${new Date(t.block_timestamp * 1000).toISOString()}] ${t.from === address ? 'Sent' : 'Received'} ${t.amount} ${t.asset_symbol} ${t.from === address ? 'to' : 'from'} ${t.to === address ? t.from : t.to}`
+  ).join('\n') || 'No recent transactions';
 
-  const prompt = `Bạn là một AI chuyên gia phân tích hành vi on-chain trên hệ sinh thái Polkadot (Reputation as Infrastructure).
-Nhiệm vụ của bạn là đánh giá UY TÍN (Reputation) của ví này, KHÔNG CHỈ DỰA VÀO VIỆC ĐẾM SỐ, mà phải phân tích "Chất lượng hành vi" và "Rủi ro Sybil" (tài khoản clone/spam).
+  const prompt = `You are an AI expert specializing in on-chain behavior analysis on the Polkadot ecosystem (Reputation as Infrastructure).
+Your task is to evaluate the REPUTATION of this wallet, NOT JUST BASED ON COUNTING NUMBERS, but analyzing "Behavior Quality" and "Sybil Risk" (clone/spam accounts).
 
-Địa chỉ ví: ${address}
+Wallet Address: ${address}
 
-1. DỮ LIỆU TỔNG QUAN:
+1. OVERVIEW DATA:
 - Identity: Has Identity: ${onChainData.identity.hasIdentity}, Verified: ${onChainData.identity.isVerified}, Judgements: ${onChainData.identity.judgements}
 - Governance: ${onChainData.governance.votesCount} votes
 - Staking: ${parseFloat(onChainData.staking.totalStaked) / 1e10} DOT
 - Activity: ${onChainData.activity.transactionCount} total transactions
 
-2. DỮ LIỆU LỊCH SỬ GIAO DỊCH GẦN NHẤT (Để tìm Pattern & Sybil Risk):
+2. RECENT TRANSACTION HISTORY DATA (To find Patterns & Sybil Risk):
 ${recentTransfersSummary}
 
-HƯỚNG DẪN CHẤM ĐIỂM BẰNG PHÂN TÍCH HÀNH VI:
-1. Tính điểm chi tiết (breakdown): identity (0-25), governance (0-30), staking (0-25), activity (0-20), behavioral (0-20).
-2. "totalScore" BẮT BUỘC phải bằng tổng các điểm thành phần cộng lại. 
-3. Nếu phát hiện Rủi ro Sybil cao (>0.7), hãy trừ điểm trực tiếp vào cột "behavioral" thay vì trừ vào tổng số một cách tùy tiện.
+SCORING GUIDELINES THROUGH BEHAVIOR ANALYSIS:
+1. Calculate detailed scores (breakdown): identity (0-25), governance (0-30), staking (0-25), activity (0-20), behavioral (0-20).
+2. "totalScore" MUST equal the sum of all component scores.
+3. If high Sybil Risk is detected (>0.7), deduct points directly from the "behavioral" column instead of arbitrarily deducting from the total.
 
-BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Không thêm text bên ngoài):
+MUST RETURN ONLY ONE VALID JSON STRING IN THE FOLLOWING FORMAT (No additional text outside):
 {
-  "totalScore": <điểm_tổng_từ_0_đến_100>,
+  "totalScore": <total_score_from_0_to_100>,
   "breakdown": {
-    "identity": <điểm>, "governance": <điểm>, "staking": <điểm>, "activity": <điểm>, "behavioral": <điểm_chất_lượng_hành_vi>
+    "identity": <score>, "governance": <score>, "staking": <score>, "activity": <score>, "behavioral": <behavior_quality_score>
   },
   "sybilRisk": {
-    "score": <từ_0.0_đến_1.0>,
-    "flaggedPatterns": ["<mô tả các mẫu hành vi bất thường nếu có, ví dụ: 'Giao dịch chuyển tiền dồn dập trong cùng 1 ngày'>"]
+    "score": <from_0.0_to_1.0>,
+    "flaggedPatterns": ["<describe abnormal behavior patterns if any, e.g., 'Rapid consecutive transfers within the same day'>"]
   },
   "rank": "<Top 1%, 5%, 10%, 25%, 50%, Unranked>",
   "level": "<Legend, Master, Expert, Advanced, Intermediate, Beginner, Newcomer>",
-  "analysis": "<Phân tích chuyên sâu bằng TIẾNG VIỆT về chất lượng thực sự của ví, có giống ví người dùng thật không>",
-  "strengths": ["<điểm mạnh 1>", "<điểm mạnh 2>"],
-  "improvements": ["<điều cần cải thiện 1>"],
-  "insights": "<Góc nhìn sâu sắc của AI về hành vi trên on-chain của ví này>"
+  "analysis": "<In-depth analysis in ENGLISH about the actual quality of the wallet, whether it resembles a real user's wallet>",
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "improvements": ["<improvement needed 1>"],
+  "insights": "<AI's deep insights about this wallet's on-chain behavior>"
 }`;
 
   const maxRetries = 2;
@@ -153,15 +153,15 @@ BẮT BUỘC TRẢ VỀ CHỈ MỘT CHUỖI JSON ĐÚNG ĐỊNH DẠNG SAU (Khô
       logger.error({ err: error, address }, 'AI reputation calculation failed');
       throw new Error(
         isTimeout
-          ? 'AI service đang xử lý quá lâu. Vui lòng thử lại sau ít phút.'
+          ? 'AI service is taking too long to process. Please try again in a few minutes.'
           : is503Error
-            ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
-            : `Lỗi AI service: ${error.message}`
+            ? 'AI service is overloaded. Please try again in a few minutes.'
+            : `AI service error: ${error.message}`
       );
     }
   }
 
-  throw new Error('Không thể tính toán reputation score');
+  throw new Error('Unable to calculate reputation score');
 }
 
 function sleep(ms: number): Promise<void> {
@@ -180,55 +180,55 @@ export async function chatWithAI(
   }
 
   const queryLower = query.toLowerCase().trim();
-  const isGreeting = /^(chào|hello|hi|xin chào|hey|chào bạn)$/i.test(queryLower);
-  const isHelp = /^(help|giúp|hướng dẫn|làm gì|có thể làm gì)$/i.test(queryLower);
+  const isGreeting = /^(hello|hi|hey|greetings)$/i.test(queryLower);
+  const isHelp = /^(help|guide|what can you do|how to)$/i.test(queryLower);
   
   let prompt = '';
 
   if (isGreeting || isHelp) {
-    prompt = `Bạn là DotRepute AI - trợ lý thông minh chuyên phân tích uy tín trên Polkadot.
+    prompt = `You are DotRepute AI - an intelligent assistant specializing in reputation analysis on Polkadot.
 
-User vừa ${isGreeting ? 'chào hỏi' : 'hỏi về hướng dẫn'}: "${query}"
+User just ${isGreeting ? 'greeted' : 'asked for guidance'}: "${query}"
 Address: ${address}
 
-Dữ liệu ví hiện tại:
-- Identity: ${onChainData.identity.hasIdentity ? 'Có' : 'Chưa có'}, Verified: ${onChainData.identity.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}
-- Governance: ${onChainData.governance.votesCount} lượt vote
+Current wallet data:
+- Identity: ${onChainData.identity.hasIdentity ? 'Has' : 'No'}, Verified: ${onChainData.identity.isVerified ? 'Verified' : 'Not verified'}
+- Governance: ${onChainData.governance.votesCount} votes
 - Staking: ${(parseFloat(onChainData.staking.totalStaked) / 1e10).toFixed(2)} DOT
-- Activity: ${onChainData.activity.transactionCount} giao dịch
+- Activity: ${onChainData.activity.transactionCount} transactions
 
-NHIỆM VỤ: Trả lời thân thiện, giới thiệu bản thân và đưa ra 3-4 gợi ý cụ thể dựa trên tình trạng ví.
+TASK: Respond friendly, introduce yourself and provide 3-4 specific suggestions based on wallet status.
 
-VÍ DỤ FORMAT:
-"Chào bạn! 👋 Tôi là DotRepute AI, trợ lý phân tích uy tín trên Polkadot. 
+EXAMPLE FORMAT:
+"Hello! 👋 I'm DotRepute AI, your reputation analysis assistant on Polkadot. 
 
-Tôi có thể giúp bạn:
-• 📊 Phân tích reputation score chi tiết
-• 🏛️ Hướng dẫn tham gia governance 
-• 💰 Tư vấn chiến lược staking
-• 🔍 Kiểm tra hoạt động on-chain
+I can help you with:
+• 📊 Detailed reputation score analysis
+• 🏛️ Governance participation guidance
+• 💰 Staking strategy advice
+• 🔍 On-chain activity review
 
-${onChainData.activity.transactionCount < 10 ? 'Tôi thấy bạn mới bắt đầu trên Polkadot. Bạn muốn tôi hướng dẫn các bước đầu tiên không?' : 'Ví của bạn khá tích cực! Bạn muốn tôi phân tích reputation score không?'}"
+${onChainData.activity.transactionCount < 10 ? 'I see you\'re new to Polkadot. Would you like me to guide you through the first steps?' : 'Your wallet is quite active! Would you like me to analyze your reputation score?'}"
 
-Trả lời bằng tiếng Việt, thân thiện và cụ thể.`;
+Respond in English, friendly and specific.`;
   } else {
-    prompt = `Bạn là DotRepute AI - trợ lý chuyên gia phân tích uy tín trên Polkadot. Trả lời dựa trên dữ liệu THỰC TẾ.
+    prompt = `You are DotRepute AI - an expert assistant specializing in reputation analysis on Polkadot. Answer based on REAL DATA.
 
-Câu hỏi: "${query}"
+Question: "${query}"
 Address: ${address}
 
-Dữ liệu on-chain:
-- Identity: ${onChainData.identity.hasIdentity ? 'Có' : 'Chưa có'}, Verified: ${onChainData.identity.isVerified ? 'Đã xác minh' : 'Chưa xác minh'}, Judgements: ${onChainData.identity.judgements}
+On-chain data:
+- Identity: ${onChainData.identity.hasIdentity ? 'Has' : 'No'}, Verified: ${onChainData.identity.isVerified ? 'Verified' : 'Not verified'}, Judgements: ${onChainData.identity.judgements}
 - Governance: ${onChainData.governance.votesCount} votes, ${onChainData.governance.proposalsCount} proposals
-- Staking: ${(parseFloat(onChainData.staking.totalStaked) / 1e10).toFixed(2)} DOT, Nominator: ${onChainData.staking.isNominator ? 'Có' : 'Không'}
-- Activity: ${onChainData.activity.transactionCount} giao dịch tổng cộng
+- Staking: ${(parseFloat(onChainData.staking.totalStaked) / 1e10).toFixed(2)} DOT, Nominator: ${onChainData.staking.isNominator ? 'Yes' : 'No'}
+- Activity: ${onChainData.activity.transactionCount} total transactions
 
-HƯỚNG DẪN TRẢ LỜI:
-- Trả lời bằng tiếng Việt, chuyên nghiệp nhưng thân thiện
-- Dựa vào dữ liệu thực tế, không bịa đặt
-- Đưa ra lời khuyên cụ thể nếu phù hợp
-- Sử dụng emoji phù hợp để sinh động
-- Nếu không hiểu câu hỏi, hỏi lại để làm rõ`;
+RESPONSE GUIDELINES:
+- Respond in English, professional but friendly
+- Base answers on actual data, don't make things up
+- Provide specific advice when appropriate
+- Use appropriate emojis to make it engaging
+- If you don't understand the question, ask for clarification`;
   }
 
   const maxRetries = 2;
@@ -252,7 +252,7 @@ HƯỚNG DẪN TRẢ LỜI:
 
       const response = await Promise.race([aiPromise, timeoutPromise]) as any;
 
-      const result = response.text || 'Xin lỗi, tôi không thể trả lời câu hỏi này.';
+      const result = response.text || 'Sorry, I cannot answer this question.';
 
       setCache(chatCache, cacheKey, result);
 
@@ -272,13 +272,13 @@ HƯỚNG DẪN TRẢ LỜI:
       logger.error({ err: error, address }, 'AI chat failed');
       throw new Error(
         isTimeout
-          ? 'AI service đang xử lý quá lâu. Vui lòng thử câu hỏi ngắn gọn hơn.'
+          ? 'AI service is taking too long to process. Please try a shorter question.'
           : is503Error
-            ? 'AI service đang quá tải. Vui lòng thử lại sau vài phút.'
-            : `Lỗi AI service: ${error.message}`
+            ? 'AI service is overloaded. Please try again in a few minutes.'
+            : `AI service error: ${error.message}`
       );
     }
   }
 
-  return 'Xin lỗi, tôi không thể trả lời câu hỏi này.';
+  return 'Sorry, I cannot answer this question.';
 }

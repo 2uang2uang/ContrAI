@@ -10,10 +10,8 @@ interface SidebarProps {
   isOpen: boolean;
   onNewChat: () => void;
   toggleSidebar: () => void;
-  onSelectSession?: (id: string) => void; // <-- Đã thêm chuẩn
+  onSelectSession?: (id: string) => void;
 }
-
-// SỬA Ở ĐÂY: Khai báo thêm onSelectSession và toggleSidebar vào tham số
 export const Sidebar: React.FC<SidebarProps> = ({ 
   sessions, 
   isOpen, 
@@ -23,7 +21,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { address } = useAccount();
   
-  // Lấy 3 ký tự đầu và 4 ký tự cuối của địa chỉ
   const displayAddress = address 
     ? `${address.slice(0, 3)}...${address.slice(-4)}`
     : '';
