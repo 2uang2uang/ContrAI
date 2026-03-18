@@ -121,7 +121,6 @@ export default function Dashboard() {
             role: "user",
             text: text,
             timestamp: new Date(),
-            isReputationQuery,
         };
 
         setMessages((prev) => [...prev, userMessage]);
@@ -216,24 +215,7 @@ export default function Dashboard() {
                 />
 
                 <main className="flex-1 flex flex-col relative w-full lg:ml-72">
-                    <div className="flex items-center gap-3 px-6 py-4 border-b border-grey-200 dark:border-grey-800 bg-white/95 dark:bg-grey-950/95 backdrop-blur-sm z-20 sticky top-0">
-                        <button
-                            onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-2 -ml-2 text-grey-500 dark:text-grey-400 hover:text-grey-900 dark:hover:text-grey-50"
-                        >
-                            <Menu className="w-5 h-5" />
-                        </button>
-                        <div className="flex items-center text-sm font-mono text-grey-500 dark:text-grey-400">
-                            <span className="hover:text-grey-900 dark:hover:text-grey-50 cursor-pointer transition-colors">
-                                Dashboard
-                            </span>
-                            <span className="mx-2">/</span>
-                            <span className="text-pink-accent bg-pink-accent/10 px-2 py-0.5 rounded border border-pink-accent/20">
-                                Interactive Reputation Assistant
-                            </span>
-                        </div>
-                    </div>
-
+                
                     <div className="flex-1 overflow-y-auto pb-32">
                         <ChatInterface messages={messages} isLoading={isLoading} />
                     </div>
