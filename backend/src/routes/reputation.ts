@@ -137,11 +137,11 @@ router.get('/leaderboard', async (req, res, next) => {
     const leaderboard = (data || []).map((entry, index) => {
       const badges: string[] = [];
       
-      if (entry.governance_score > 80) badges.push('Governance Whale');
-      if (entry.identity_score > 90) badges.push('Verified Identity');
-      if (entry.economic_score > 80) badges.push('Economic Contributor');
-      if (entry.behavioral_score > 85) badges.push('Active Participant');
-      if (entry.total_score > 900) badges.push('Elite Member');
+      if (entry.total_score >= 95) badges.push('Diamond');
+      if (entry.total_score >= 85) badges.push('Platinum');
+      if (entry.total_score >= 75) badges.push('Gold');
+      if (entry.total_score >= 50) badges.push('Silver');
+      if (entry.total_score < 50 ) badges.push('Bronze');
       
       return {
         address: entry.address,
@@ -149,7 +149,6 @@ router.get('/leaderboard', async (req, res, next) => {
         rank: entry.rank,
         level: entry.level,
         badges,
-        trend: 'neutral' as const,
         position: index + 1,
       };
     });

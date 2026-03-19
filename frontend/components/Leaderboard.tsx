@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Trophy, TrendingUp, TrendingDown, Minus, Shield, Award, Hexagon, Loader2, RefreshCw } from 'lucide-react';
+import { Trophy, Shield, Award, Hexagon, Loader2, } from 'lucide-react';
 import { getLeaderboard, LeaderboardEntry } from '@/lib/api';
 
 const Leaderboard: React.FC = () => {
@@ -39,14 +39,6 @@ const Leaderboard: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={fetchLeaderboard}
-              disabled={loading}
-              className="flex items-center gap-2 bg-white dark:bg-grey-900 px-4 py-2 rounded-lg border border-grey-200 dark:border-grey-800 shadow-sm hover:bg-grey-50 dark:hover:bg-grey-800 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 text-grey-600 dark:text-grey-400 ${loading ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium text-grey-900 dark:text-white hidden sm:inline">Refresh</span>
-            </button>
             <div className="hidden sm:flex items-center gap-2 bg-white dark:bg-grey-900 px-4 py-2 rounded-lg border border-grey-200 dark:border-grey-800 shadow-sm">
               <Shield className="w-5 h-5 text-emerald-500" />
               <span className="text-sm font-medium text-grey-900 dark:text-white">Global Ranking</span>
@@ -81,7 +73,6 @@ const Leaderboard: React.FC = () => {
                     <th className="py-4 px-6 text-xs font-semibold text-grey-500 dark:text-grey-400 uppercase tracking-wider">Score</th>
                     <th className="py-4 px-6 text-xs font-semibold text-grey-500 dark:text-grey-400 uppercase tracking-wider">Level</th>
                     <th className="py-4 px-6 text-xs font-semibold text-grey-500 dark:text-grey-400 uppercase tracking-wider">Badges</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-grey-500 dark:text-grey-400 uppercase tracking-wider text-right">Trend</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-grey-200 dark:divide-grey-800">
@@ -125,25 +116,13 @@ const Leaderboard: React.FC = () => {
                       <td className="py-4 px-6">
                         <div className="flex flex-wrap gap-2">
                           {entry.badges && entry.badges.length > 0 ? (
-                            entry.badges.slice(0, 2).map(badge => (
-                              <span key={badge} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-grey-100 dark:bg-grey-800 text-grey-700 dark:text-grey-300 border border-grey-200 dark:border-grey-700">
-                                <Award className="w-3 h-3" />
-                                {badge}
-                              </span>
-                            ))
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-grey-100 dark:bg-grey-800 text-grey-700 dark:text-grey-300 border border-grey-200 dark:border-grey-700">
+                              <Award className="w-3 h-3" />
+                              {entry.badges[0]}
+                            </span>
                           ) : (
                             <span className="text-xs text-grey-400 dark:text-grey-600">-</span>
                           )}
-                          {entry.badges && entry.badges.length > 2 && (
-                            <span className="text-xs text-grey-400 dark:text-grey-500">+{entry.badges.length - 2}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end">
-                          {entry.trend === 'up' && <TrendingUp className="w-5 h-5 text-emerald-500" />}
-                          {entry.trend === 'down' && <TrendingDown className="w-5 h-5 text-red-500" />}
-                          {entry.trend === 'neutral' && <Minus className="w-5 h-5 text-grey-400" />}
                         </div>
                       </td>
                     </tr>
