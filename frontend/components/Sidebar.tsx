@@ -58,10 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <MessageSquare className="w-3.5 h-3.5" />
           Chats
         </button>
-        <button className="flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium text-grey-500 dark:text-grey-400 hover:text-grey-900 dark:hover:text-grey-50 transition-colors">
-          <Bookmark className="w-3.5 h-3.5" />
-          Saved
-        </button>
+        
       </div>
 
       {/* Chat List */}

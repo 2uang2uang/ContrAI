@@ -200,18 +200,7 @@ const LandingNavbar = ({
 
             <div className="flex items-center gap-6 md:gap-8">
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium text-grey-500 dark:text-grey-400">
-                    <a
-                        href="#"
-                        className="hover:text-pink-accent transition-colors"
-                    >
-                        Docs
-                    </a>
-                    <a
-                        href="#"
-                        className="hover:text-pink-accent transition-colors"
-                    >
-                        Governance
-                    </a>
+                    
                     <a
                         href="/leaderboard"
                         className="hover:text-pink-accent transition-colors"

@@ -115,11 +115,11 @@ contract ReputationStorage {
     // ── Enums ──────────────────────────────────
     enum Tier {
         None, // 0 — not evaluated
-        Stone, // 1 — bottom 50%
-        Bronze, // 2 — 50th–75th percentile
-        Silver, // 3 — 75th–90th percentile
-        Gold, // 4 — 90th–97th percentile
-        Diamond // 5 — top 3%
+        Bronze, // 1 — below 50%
+        Silver, // 2 — 50th–75th percentile
+        Gold, // 3 — 75th–85th percentile
+        Platinum, // 4 — 85th–95th percentile
+        Diamond // 5 — top 5%
     }
 
     // ── Structs ────────────────────────────────
@@ -241,11 +241,11 @@ contract ReputationStorage {
     /// Gold    9000–9699
     /// Diamond >= 9700 (top 3%)
     function _computeTier(uint256 bps) internal pure returns (Tier) {
-        if (bps >= 9700) return Tier.Diamond;
-        if (bps >= 9000) return Tier.Gold;
-        if (bps >= 7500) return Tier.Silver;
-        if (bps >= 5000) return Tier.Bronze;
-        return Tier.Stone;
+        if (bps >= 9500) return Tier.Diamond; // >= 95%
+        if (bps >= 8500) return Tier.Platinum; // >= 85%
+        if (bps >= 7500) return Tier.Gold; // >= 75%
+        if (bps >= 5000) return Tier.Silver; // >= 50%
+        return Tier.Bronze; // < 50%
     }
 
     function _pushHistory(address wallet, uint256 pct, Tier tier) internal {
@@ -503,7 +503,7 @@ contract ReputationRegistry {
 
     // ── Config ────────────────────────────────
     bool public paused;
-    uint256 public minTierForBadge = 2; // Bronze and above get badges (Stone = no badge)
+    uint256 public minTierForBadge = 1; // Bronze and above get badges
     uint256 public scoreValiditySeconds = 28 days; // Score expires after 28 days
 
     // ── Nonce (replay protection) ──────────────

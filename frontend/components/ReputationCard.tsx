@@ -69,11 +69,11 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
     : 'No activity';
 
   const getTierFromScore = (totalScore: number): { name: string; value: number } => {
-    if (totalScore >= 97) return { name: 'Diamond', value: 5 }; 
-    if (totalScore >= 90) return { name: 'Gold', value: 4 };    
-    if (totalScore >= 75) return { name: 'Silver', value: 3 };  
-    if (totalScore >= 50) return { name: 'Bronze', value: 2 };  
-    return { name: 'Stone', value: 1 };                         
+    if (totalScore >= 95) return { name: 'Diamond', value: 5 }; 
+    if (totalScore >= 85) return { name: 'Platinum', value: 4 };    
+    if (totalScore >= 75) return { name: 'Gold', value: 3 };  
+    if (totalScore >= 50) return { name: 'Silver', value: 2 };  
+    return { name: 'Bronze', value: 1 };                         
   };
 
   const registryAddress = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || ""; 
@@ -82,7 +82,38 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
     setLoading(true);
 
     try {
+       const passetHub = {
+  id: 420420417,
+  name: 'Passet Hub',
+  network: 'passet-hub',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'PAS',
+    symbol: 'PAS',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://services.polkadothub-rpc.com/testnet'],
+    },
+  },
+} as const
       const ethereum = (window as any).ethereum;
+      await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: `0x${passetHub.id.toString(16)}`,
+                chainName: passetHub.name,
+                rpcUrls: [passetHub.rpcUrls.default.http[0]],
+                nativeCurrency: {
+                  name: passetHub.nativeCurrency.name,
+                  symbol: passetHub.nativeCurrency.symbol,
+                  decimals: passetHub.nativeCurrency.decimals,
+                },
+              },
+            ],
+          });
+
       const provider = new ethers.BrowserProvider(ethereum);
       const signer = await provider.getSigner();
       const evmAddress = await signer.getAddress();
@@ -108,7 +139,10 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
         signature
       );
 
-      await tx.wait();
+      console.log("Transaction hash:", tx.hash);
+      const receipt = await tx.wait();
+      console.log("Transaction confirmed:", receipt);
+      
       alert("🎉 Congratulations! You have successfully verified your reputation score and minted your badge!");
 
     } catch (err: any) {
@@ -407,7 +441,7 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
           </div>
         )}
 
-        {score >= 5 && (
+        
           <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-xl">
             <div className="flex items-start gap-3 mb-3">
               <Sparkles className="w-5 h-5 text-purple-400 mt-0.5" />
@@ -433,8 +467,7 @@ export const ReputationCard: React.FC<ReputationCardProps> = ({ data }) => {
               {loading ? 'Minting...' : `Mint ${getTierFromScore(score).name} Badge`}
             </button>
           </div>
-        )}
-
+        
       </div>
     </div>
   );
