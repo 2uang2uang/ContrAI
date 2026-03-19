@@ -345,19 +345,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         animate="show"
                         className="max-w-4xl flex flex-col items-center"
                     >
-                        <motion.div
-                            variants={item}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-grey-200 dark:border-grey-800 bg-white/50 dark:bg-white/5 backdrop-blur-sm text-xs font-medium mb-8 hover:border-green-accent/50 transition-colors cursor-default"
-                        >
-                            <span className="relative flex h-2 w-2">
-                                
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            </span>
-                            <span className="text-grey-600 dark:text-grey-300 uppercase tracking-wider">
-                                Polkadot / Ver-2.0
-                            </span>
-                        </motion.div>
-
                         <motion.h1
                             variants={item}
                             className="font-serif text-6xl md:text-8xl tracking-tight mb-8 leading-[1.0] text-grey-900 dark:text-white"
@@ -374,12 +361,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             variants={item}
                             className="text-xl text-grey-600 dark:text-grey-400 max-w-2xl mb-12 leading-relaxed font-light"
                         >
-                            ContrAI is a{" "}
+                            ContrAI is an{" "}
                             <span className="font-medium text-grey-900 dark:text-white">
-                                Rust-powered Contributor Reputation System
+                                AI-powered intelligence layer
                             </span>{" "}
-                            for the Polkadot ecosystem. Aggregating identity,
-                            governance, staking, and activity signals.
+                            We transform raw on-chain signals—identity, governance, and staking—into actionable insights for the ecosystem.
                         </motion.p>
 
                         <motion.div
@@ -415,7 +401,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-grey-200 dark:divide-grey-800 relative z-10">
                         <StatItem label="Active Identities" value="12.4K" />
                         <StatItem label="Governance Votes" value="850K" />
-                        <StatItem label="DOT Staked" value="2.2M" />
+                        <StatItem label="Reputation Minted" value="3.6K" />
                         <StatItem label="Trust Score" value="99.9%" />
                     </div>
                 </div>
@@ -543,24 +529,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                     <div className="flex items-center gap-6">
                         <a
-                            href="#"
+                            href="https://github.com/2uang2uang/ContrAI"
                             className="text-grey-400 dark:text-grey-500 hover:text-grey-900 dark:hover:text-white transition-colors transform hover:scale-110"
                         >
                             <Github className="w-5 h-5" />
                         </a>
-                        <a
-                            href="#"
-                            className="text-grey-400 dark:text-grey-500 hover:text-grey-900 dark:hover:text-white transition-colors transform hover:scale-110"
-                        >
-                            <Twitter className="w-5 h-5" />
-                        </a>
-                    </div>
-
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-grey-200 dark:bg-grey-900 border border-grey-300 dark:border-grey-800">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[10px] text-grey-600 dark:text-grey-400 font-medium uppercase">
-                            All Systems Operational
-                        </span>
                     </div>
                 </div>
             </footer>
